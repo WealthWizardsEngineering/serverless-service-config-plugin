@@ -3,6 +3,14 @@
 const request = require('request-promise-native');
 const aws     = require('aws-sdk');
 
+// Default config
+// consulAddr
+// vaultAddr
+// consulRootContext
+// vaultRootContext
+// tenant
+// kmsKeyArn
+
 class ServerlessServiceConfig {
   constructor(serverless, options) {
     this.serverless = serverless;
@@ -81,6 +89,7 @@ class ServerlessServiceConfig {
         json: true,
       });
 
+      // get from sls config
       const awsConfig = { region: 'eu-west-1' };
       const profile = this.serverless.variables.options['aws-profile'];
 
