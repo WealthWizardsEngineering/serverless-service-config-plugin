@@ -5,11 +5,14 @@ const proxyquire = require('proxyquire').noCallThru();
 const { KMS } = require('aws-sdk');
 const kms = new KMS();
 
-const consulStub = sinon.stub(consul, 'get');
+const consulStub = sinon.stub();
 const requestStub = sinon.stub();
 const kmsStub = sinon.stub(kms, 'encrypt');
 
-const vault2kms = proxyquire('./vault2kms', { 'request-promise-native': requestStub });
+const vault2kms = proxyquire('./vault2kms', { 
+    'request-promise-native': requestStub, 
+    './consul': { get: consulStub }
+});
 
 test('before - fake vault token', t => {
     process.env.VAULT_TOKEN = 'vault_token';

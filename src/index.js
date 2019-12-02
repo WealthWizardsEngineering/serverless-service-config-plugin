@@ -2,6 +2,10 @@
 
 const request = require('request-promise-native');
 const aws     = require('aws-sdk');
+const consul = require('./consul');
+const vault2kms = require('./vault2kms');
+const pluginConfig = require('./plugin_config');
+const kmsConfig = require('./kms_config');
 
 // Default config
 // consulAddr
@@ -18,7 +22,38 @@ class ServerlessServiceConfig {
 
     this.variableResolvers = {
       ww_serviceConfig: this.getConfig.bind(this),
+      serviceConfig: this.getServiceConfig.bind(this)
     }
+  }
+
+  // the serverless framework will always invoke this
+  // function with param starting with 'serviceConfig:'
+  async getServiceConfig(param = 'serviceConfig:') {
+
+    const path = param.slice('serviceConfig:'.length);
+
+    const { service_config_plugin } = this.serverless.service.custom;
+
+    const config = pluginConfig.load(service_config_plugin);
+
+    return await consul.get(`${config.consulUrl()}${path}`);
+  }
+
+  // the serverless framework will always invoke this
+  // function with param starting with 'secretConfig:'
+  async getSecretConfig(param = 'secretConfig:') {
+
+    const path = param.slice('secretConfig:'.length);
+
+    const { service_config_plugin } = this.serverless.service.custom;
+
+    const config = pluginConfig.load(service_config_plugin);
+
+    if (!config.kmsKeyId) {
+      throw new Error('KMS Key Id missing, please specify it in in the plugin config [service_config_plugin/kmsKeyId]');
+    }
+
+    return await vault2kms(path, config.vaultUrl(), kmsConfig.load(), config.kmsKeyId);
   }
 
   async getConfig() {
@@ -73,7 +108,7 @@ class ServerlessServiceConfig {
 
     return values;
 
-  }
+  };
 
   async vault2kms(secretPath) {
 
@@ -111,7 +146,7 @@ class ServerlessServiceConfig {
       this.serverless.cli.log(`err [${err.message}] received while fetching ${process.env.VAULT_ADDR}/v1/${secretPath}`, 'ServerlessServiceConfigPlugin[Vault2KMS]', {color: 'red'})
       throw err;
     }
-  }
+  };
 }
 
 module.exports = ServerlessServiceConfig;
