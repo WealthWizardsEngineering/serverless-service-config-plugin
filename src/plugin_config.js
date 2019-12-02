@@ -28,14 +28,27 @@ function trimTrailingSlash(path) {
     return trimTrailingSlash(path.replace(/\/$/, ''));
 }
 
+function buildUrl({ addr, root, prefix }) {
+    const trimmmedPrefix = trimPath(prefix);
+    return `${trimTrailingSlash(addr)}/${trimPath(root)}/${trimmmedPrefix ? trimmmedPrefix + '/' : ''}`;
+}
+
 function load(overrides = {}) {
 
     function consulUrl() {
-        return `${trimTrailingSlash(this.consulAddr)}/${trimPath(this.consulRootContext)}/${trimPath(this.consulPrefix)}/`;
+        return buildUrl({
+            addr: this.consulAddr,
+            root: this.consulRootContext,
+            prefix: this.consulPrefix,
+        })
     }
 
     function vaultUrl() {
-        return `${trimTrailingSlash(this.vaultAddr)}/${trimPath(this.vaultRootContext)}/${trimPath(this.vaultPrefix)}/`;
+        return buildUrl({
+            addr: this.vaultAddr,
+            root: this.vaultRootContext,
+            prefix: this.vaultPrefix,
+        })
     }
 
     return {

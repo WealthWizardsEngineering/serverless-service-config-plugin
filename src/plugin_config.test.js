@@ -75,3 +75,15 @@ test('should handle extra/missing slashes', assert => {
     assert.equal(config.consulUrl(), 'https://consul/consulRoot/consul/prefix/')
     assert.equal(config.vaultUrl(), 'https://vault/vaultRoot/path/vault/prefix/')
 })
+
+test('should handle empty prefixes', assert => {
+    assert.plan(2);
+
+    const config = pluginConfig.load({
+        consulAddr: 'https://consul/',
+        vaultAddr: 'https://vault',
+    });
+
+    assert.equal(config.consulUrl(), 'https://consul/v1/kv/')
+    assert.equal(config.vaultUrl(), 'https://vault/v1/')
+})
