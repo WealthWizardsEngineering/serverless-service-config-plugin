@@ -53,7 +53,7 @@ class ServerlessServiceConfig {
       throw new Error('KMS Key Id missing, please specify it in in the plugin config [service_config_plugin/kmsKeyId]');
     }
 
-    return await vault2kms(path, config.vaultUrl(), kmsConfig.load(), config.kmsKeyId);
+    return await vault2kms(path, config.vaultUrl(), kmsConfig.load(this.serverless), config.kmsKeyId);
   }
 
   async getConfig() {

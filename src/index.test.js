@@ -9,7 +9,7 @@ const kmsConfigStub = sinon.stub();
 const ServerlessServiceConfig = proxyquire('./index', {
     './consul': { get: consulStub },
     './vault2kms': vault2kmsStub,
-    './kms_config': kmsConfigStub
+    './kms_config': { load: kmsConfigStub }
 });
 
 test('serviceConfig', t => {
@@ -45,16 +45,7 @@ test('secretConfig', t => {
 
         const fakeKms = {};
         const kmsKeyId = 'kmsKeyId';
-
-        vault2kmsStub.reset();
-        vault2kmsStub
-            .withArgs('vault/my_secret/secret', 'http://vault_server/v1/', fakeKms, kmsKeyId)
-            .resolves('a base64 encrypted secret');
-
-        kmsConfigStub.reset();
-        kmsConfigStub.returns(fakeKms);
-
-        const service = new ServerlessServiceConfig({
+        const slsConfig = {
             service: {
                 custom: {
                     service_config_plugin: {
@@ -63,7 +54,19 @@ test('secretConfig', t => {
                     }
                 }
             }
-        });
+        };
+
+        vault2kmsStub.reset();
+        vault2kmsStub
+            .withArgs('vault/my_secret/secret', 'http://vault_server/v1/', fakeKms, kmsKeyId)
+            .resolves('a base64 encrypted secret');
+
+        kmsConfigStub.reset();
+        kmsConfigStub
+            .withArgs(slsConfig)
+            .returns(fakeKms);
+
+        const service = new ServerlessServiceConfig(slsConfig);
 
         const value = await service.getSecretConfig('secretConfig:vault/my_secret/secret')
 
