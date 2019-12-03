@@ -1,22 +1,21 @@
 const aws = require('aws-sdk');
 
 const load = (serverlessConfig = {}) => {
+  const awsConfig = {};
 
-    const awsConfig = {};
+  if (serverlessConfig.provider && serverlessConfig.provider.region) {
+    awsConfig.region = serverlessConfig.provider.region;
+  }
 
-    if (serverlessConfig.provider && serverlessConfig.provider.region) {
-        awsConfig.region = serverlessConfig.provider.region;
-    }
+  const profile = this.serverless.variables.options['aws-profile'];
 
-    const profile = this.serverless.variables.options['aws-profile'];
+  if (profile) {
+    awsConfig.credentials = new aws.SharedIniFileCredentials({ profile });
+  }
 
-    if (profile) {
-      awsConfig.credentials = new aws.SharedIniFileCredentials({ profile });
-    }
-
-    return new aws.KMS(awsConfig);
-}
+  return new aws.KMS(awsConfig);
+};
 
 module.exports = {
-    load,
-}
+  load,
+};
