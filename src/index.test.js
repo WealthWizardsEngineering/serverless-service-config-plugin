@@ -49,6 +49,7 @@ test('secretConfig', (t) => {
       service: {
         custom: {
           service_config_plugin: {
+            consulAddr: 'http://consul',
             vaultAddr: 'http://vault_server',
             kmsKeyId,
           }
@@ -58,7 +59,7 @@ test('secretConfig', (t) => {
 
     vault2kmsStub.reset();
     vault2kmsStub
-      .withArgs('vault/my_secret/secret', 'http://vault_server/v1/', fakeKms, kmsKeyId)
+      .withArgs('http://consul/v1/kv/vault/my_secret/secret', 'http://vault_server/v1/', fakeKms, kmsKeyId)
       .resolves('a base64 encrypted secret');
 
     kmsConfigStub.reset();
