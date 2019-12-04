@@ -33,13 +33,13 @@ test('should retrieve data from consul', async (assert) => {
 });
 
 test('should fail if no value is found', async (assert) => {
-  assert.plan(3);
-
   const expectedResponses = [
     [{ otherKey: 'Value missing' }],
     [],
     null
   ];
+
+  assert.plan(expectedResponses.length);
 
   for (const response of expectedResponses) {
     requestStub.reset();
@@ -48,8 +48,24 @@ test('should fail if no value is found', async (assert) => {
     try {
       await consul.get('http://consul/kv/myKey');
     } catch (e) {
-      assert.equal(e.message, 'Missing value at http://consul/kv/myKey');
+      assert.equal(e.message, 'Missing value in Consul at http://consul/kv/myKey');
     }
+  }
+});
+
+test('should display friendlier error when receiving 404 from Consul', async (assert) => {
+  assert.plan(1);
+
+  const notFoundError = new Error();
+  notFoundError.statusCode = 404;
+
+  requestStub.reset();
+  requestStub.rejects(notFoundError);
+
+  try {
+    await consul.get('http://consul/kv/myKey');
+  } catch (e) {
+    assert.equal(e.message, 'Missing value in Consul at http://consul/kv/myKey');
   }
 });
 

@@ -83,11 +83,32 @@ test('should throw if no data is returned from Vault', async (assert) => {
     try {
       await vault2kms('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
     } catch (e) {
-      assert.equal(e.message, 'Missing secret at secret/path');
+      assert.equal(e.message, 'Missing secret in Vault at secret/path');
     }
   }
 });
 
+test('should throw friendler exception when Vault returns 404', async (assert) => {
+  consulStub.reset();
+
+  consulStub
+    .withArgs('path/to/secret')
+    .resolves('secret/path');
+
+  const notFoundError = new Error('404 - not found');
+  notFoundError.statusCode = 404;
+
+  assert.plan(1);
+
+  requestStub.reset();
+  requestStub.rejects(notFoundError);
+
+  try {
+    await vault2kms('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+  } catch (e) {
+    assert.equal(e.message, 'Missing secret in Vault at secret/path');
+  }
+});
 
 test('should throw if encrypted secret cannot be retrieved', async (assert) => {
   consulStub.reset();

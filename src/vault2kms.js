@@ -2,20 +2,24 @@ const request = require('request-promise-native');
 const consul = require('./consul');
 
 const getSecretFromVault = async (secretPath, vaultPrefix) => {
-  const vaultResponse = await request({
-    method: 'GET',
-    url: `${vaultPrefix}${secretPath}`,
-    headers: {
-      'X-Vault-Token': process.env.VAULT_TOKEN,
-    },
-    json: true,
-  });
+  try {
+    const vaultResponse = await request({
+      method: 'GET',
+      url: `${vaultPrefix}${secretPath}`,
+      headers: {
+        'X-Vault-Token': process.env.VAULT_TOKEN,
+      },
+      json: true,
+    });
 
-  if (vaultResponse && vaultResponse.data && vaultResponse.data.value) {
-    return vaultResponse.data.value;
+    if (vaultResponse && vaultResponse.data && vaultResponse.data.value) {
+      return vaultResponse.data.value;
+    }
+  } catch (e) {
+    if (e.statusCode !== 404) throw e;
   }
 
-  throw new Error(`Missing secret at ${secretPath}`);
+  throw new Error(`Missing secret in Vault at ${secretPath}`);
 };
 
 const kmsEncrypt = async (params, kms) => {
