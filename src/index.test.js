@@ -8,7 +8,7 @@ const kmsConfigStub = sinon.stub();
 
 const ServerlessServiceConfig = proxyquire('./index', {
   './consul': { get: consulStub },
-  './vault2kms': vault2kmsStub,
+  './vault2kms': { retrieveAndEncrypt: vault2kmsStub },
   './kms_config': { load: kmsConfigStub }
 });
 

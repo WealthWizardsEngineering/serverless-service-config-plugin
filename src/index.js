@@ -42,7 +42,7 @@ class ServerlessServiceConfig {
       throw new Error(`KMS Key Id missing, please specify it in in the plugin config [service_config_plugin.kmsKeyId.${stage}]`);
     }
 
-    return vault2kms(`${config.consulUrl()}${path}`, config.vaultUrl(), kmsConfig.load(this.serverless), config.kmsKeyId[stage]);
+    return vault2kms.retrieveAndEncrypt(`${config.consulUrl()}${path}`, config.vaultUrl(), kmsConfig.load(this.serverless), config.kmsKeyId[stage]);
   }
 }
 

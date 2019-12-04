@@ -32,7 +32,7 @@ const kmsEncrypt = async (params, kms) => {
   throw new Error('Missing encrypted secret value from AWS response');
 };
 
-module.exports = async (path, vaultPrefix, kms, kmsKeyId) => {
+const retrieveAndEncrypt = async (path, vaultPrefix, kms, kmsKeyId) => {
   if (!process.env.VAULT_TOKEN) {
     throw new Error('Missing vault token for authentication, you need to set VAULT_TOKEN as a environment variable');
   }
@@ -45,4 +45,8 @@ module.exports = async (path, vaultPrefix, kms, kmsKeyId) => {
     KeyId: kmsKeyId,
     Plaintext: secretValue,
   }, kms);
+};
+
+module.exports = {
+  retrieveAndEncrypt,
 };

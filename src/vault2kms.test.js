@@ -56,7 +56,7 @@ test('should retrieve secret path from Consul, secret from Vault and encrypt wit
       })
     });
 
-  const encryptedSecret = await vault2kms('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+  const encryptedSecret = await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
 
   assert.equal(encryptedSecret, 'ZW5jcnlwdGVkOmZha2Vfc2VjcmV0');
 });
@@ -81,7 +81,7 @@ test('should throw if no data is returned from Vault', async (assert) => {
     requestStub.resolves(response);
 
     try {
-      await vault2kms('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+      await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
     } catch (e) {
       assert.equal(e.message, 'Missing secret in Vault at secret/path');
     }
@@ -104,7 +104,7 @@ test('should throw friendler exception when Vault returns 404', async (assert) =
   requestStub.rejects(notFoundError);
 
   try {
-    await vault2kms('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+    await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
   } catch (e) {
     assert.equal(e.message, 'Missing secret in Vault at secret/path');
   }
@@ -139,7 +139,7 @@ test('should throw if encrypted secret cannot be retrieved', async (assert) => {
     });
 
     try {
-      await vault2kms('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+      await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
     } catch (e) {
       assert.equal(e.message, 'Missing encrypted secret value from AWS response');
     }
@@ -155,7 +155,7 @@ test('should fail if vault token not present', async (assert) => {
   assert.plan(1);
 
   try {
-    await vault2kms('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+    await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
   } catch (e) {
     assert.equal(e.message, 'Missing vault token for authentication, you need to set VAULT_TOKEN as a environment variable');
   }
