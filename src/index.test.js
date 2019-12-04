@@ -44,9 +44,14 @@ test('secretConfig', (t) => {
     assert.plan(1);
 
     const fakeKms = {};
-    const kmsKeyId = 'kmsKeyId';
+    const kmsKeyId = {
+      stage: 'kmsKeyId'
+    };
     const slsConfig = {
       service: {
+        provider: {
+          stage: 'stage'
+        },
         custom: {
           service_config_plugin: {
             consulAddr: 'http://consul',
@@ -59,7 +64,7 @@ test('secretConfig', (t) => {
 
     vault2kmsStub.reset();
     vault2kmsStub
-      .withArgs('http://consul/v1/kv/vault/my_secret/secret', 'http://vault_server/v1/', fakeKms, kmsKeyId)
+      .withArgs('http://consul/v1/kv/vault/my_secret/secret', 'http://vault_server/v1/', fakeKms, 'kmsKeyId')
       .resolves('a base64 encrypted secret');
 
     kmsConfigStub.reset();
@@ -74,11 +79,14 @@ test('secretConfig', (t) => {
     assert.equal(value, 'a base64 encrypted secret');
   });
 
-  t.test('should fail if kms key id is missing', async (assert) => {
+  t.test('should fail if kms key id definition is missing', async (assert) => {
     assert.plan(1);
 
     const service = new ServerlessServiceConfig({
       service: {
+        provider: {
+          stage: 'dev'
+        },
         custom: {
           service_config_plugin: {}
         }
@@ -88,7 +96,32 @@ test('secretConfig', (t) => {
     try {
       await service.getSecretConfig('secretConfig:vault/my_secret/secret');
     } catch (e) {
-      assert.equal(e.message, 'KMS Key Id missing, please specify it in in the plugin config [service_config_plugin/kmsKeyId]');
+      assert.equal(e.message, 'KMS Key Id missing, please specify it in in the plugin config [service_config_plugin.kmsKeyId.dev]');
+    }
+  });
+
+  t.test('should fail if kms key id for stage is missing', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        provider: {
+          stage: 'green'
+        },
+        custom: {
+          service_config_plugin: {
+            kmsKeyId: {
+              blue: 'myKey'
+            }
+          }
+        }
+      }
+    });
+
+    try {
+      await service.getSecretConfig('secretConfig:vault/my_secret/secret');
+    } catch (e) {
+      assert.equal(e.message, 'KMS Key Id missing, please specify it in in the plugin config [service_config_plugin.kmsKeyId.green]');
     }
   });
 });

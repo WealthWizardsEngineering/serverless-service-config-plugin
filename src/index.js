@@ -32,14 +32,17 @@ class ServerlessServiceConfig {
     const path = param.slice('secretConfig:'.length);
 
     const { service_config_plugin } = this.serverless.service.custom;
+    const { stage } = this.serverless.service.provider;
 
     const config = pluginConfig.load(service_config_plugin);
 
-    if (!config.kmsKeyId) {
-      throw new Error('KMS Key Id missing, please specify it in in the plugin config [service_config_plugin/kmsKeyId]');
+    const { kmsKeyId = {} } = config;
+
+    if (!kmsKeyId[stage]) {
+      throw new Error(`KMS Key Id missing, please specify it in in the plugin config [service_config_plugin.kmsKeyId.${stage}]`);
     }
 
-    return vault2kms(`${config.consulUrl()}${path}`, config.vaultUrl(), kmsConfig.load(this.serverless), config.kmsKeyId);
+    return vault2kms(`${config.consulUrl()}${path}`, config.vaultUrl(), kmsConfig.load(this.serverless), config.kmsKeyId[stage]);
   }
 }
 
