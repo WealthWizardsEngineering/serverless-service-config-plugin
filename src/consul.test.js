@@ -4,7 +4,9 @@ const sinon = require('sinon');
 
 const requestStub = sinon.stub();
 
-const consul = proxyquire('./consul', { 'request-promise-native': requestStub });
+const consul = proxyquire('./consul', {
+  'request-promise-native': requestStub
+});
 
 test('before', (t) => {
   process.env.CONSUL_TOKEN = 'myToken';
@@ -23,9 +25,7 @@ test('should retrieve data from consul', async (assert) => {
       },
       json: true
     })
-    .resolves([
-      { Value: 'dGhpcyBpcyBteSBjb25maWcgdmFsdWU=' }
-    ]);
+    .resolves([{ Value: 'dGhpcyBpcyBteSBjb25maWcgdmFsdWU=' }]);
 
   const consulValue = await consul.get('http://consul/kv/myKey');
 
@@ -33,11 +33,7 @@ test('should retrieve data from consul', async (assert) => {
 });
 
 test('should fail if no value is found', async (assert) => {
-  const expectedResponses = [
-    [{ otherKey: 'Value missing' }],
-    [],
-    null
-  ];
+  const expectedResponses = [[{ otherKey: 'Value missing' }], [], null];
 
   assert.plan(expectedResponses.length);
 
@@ -48,9 +44,33 @@ test('should fail if no value is found', async (assert) => {
     try {
       await consul.get('http://consul/kv/myKey');
     } catch (e) {
-      assert.equal(e.message, 'Missing value in Consul at http://consul/kv/myKey');
+      assert.equal(
+        e.message,
+        'Missing value in Consul at http://consul/kv/myKey'
+      );
     }
   }
+});
+
+test('should set blank value if options define allowMissing = true', async (assert) => {
+  assert.plan(1);
+
+  requestStub.reset();
+  requestStub
+    .withArgs({
+      url: 'http://consul/kv/foo',
+      headers: {
+        'X-Consul-Token': 'myToken'
+      },
+      json: true
+    })
+    .resolves(null);
+
+  const consulValue = await consul.get('http://consul/kv/foo', {
+    allowMissing: true
+  });
+
+  assert.equal(consulValue, null);
 });
 
 test('should display friendlier error when receiving 404 from Consul', async (assert) => {
@@ -65,7 +85,10 @@ test('should display friendlier error when receiving 404 from Consul', async (as
   try {
     await consul.get('http://consul/kv/myKey');
   } catch (e) {
-    assert.equal(e.message, 'Missing value in Consul at http://consul/kv/myKey');
+    assert.equal(
+      e.message,
+      'Missing value in Consul at http://consul/kv/myKey'
+    );
   }
 });
 
@@ -80,6 +103,9 @@ test('should fail if consul token not present', async (assert) => {
   try {
     await consul.get('http://consul/kv/myKey');
   } catch (e) {
-    assert.equal(e.message, 'Missing consul token for authentication, you need to set CONSUL_TOKEN as a environment variable');
+    assert.equal(
+      e.message,
+      'Missing consul token for authentication, you need to set CONSUL_TOKEN as a environment variable'
+    );
   }
 });

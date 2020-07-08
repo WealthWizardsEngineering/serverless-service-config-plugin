@@ -10,7 +10,7 @@ class ServerlessServiceConfig {
 
     this.variableResolvers = {
       serviceConfig: this.getServiceConfig.bind(this),
-      secretConfig: this.getSecretConfig.bind(this),
+      secretConfig: this.getSecretConfig.bind(this)
     };
   }
 
@@ -23,7 +23,7 @@ class ServerlessServiceConfig {
 
     const config = pluginConfig.load(service_config_plugin);
 
-    return consul.get(`${config.consulUrl()}${path}`);
+    return consul.get(`${config.consulUrl()}${path}`, this.options);
   }
 
   // the serverless framework will always invoke this
@@ -39,10 +39,17 @@ class ServerlessServiceConfig {
     const { kmsKeyId = {} } = config;
 
     if (!kmsKeyId[stage]) {
-      throw new Error(`KMS Key Id missing, please specify it in in the plugin config [service_config_plugin.kmsKeyId.${stage}]`);
+      throw new Error(
+        `KMS Key Id missing, please specify it in in the plugin config [service_config_plugin.kmsKeyId.${stage}]`
+      );
     }
 
-    return vault2kms.retrieveAndEncrypt(`${config.consulUrl()}${path}`, config.vaultUrl(), kmsConfig.load(this.serverless), config.kmsKeyId[stage]);
+    return vault2kms.retrieveAndEncrypt(
+      `${config.consulUrl()}${path}`,
+      config.vaultUrl(),
+      kmsConfig.load(this.serverless),
+      config.kmsKeyId[stage]
+    );
   }
 }
 
