@@ -1,25 +1,25 @@
 const defaultPluginConfig = {
-  consulAddr: "https://127.0.0.1:8500",
-  consulRootContext: "v1/kv",
-  consulPrefix: "",
-  vaultAddr: "https://127.0.0.1:8200",
-  vaultRootContext: "v1",
-  vaultPrefix: "",
+  consulAddr: 'https://127.0.0.1:8500',
+  consulRootContext: 'v1/kv',
+  consulPrefix: '',
+  vaultAddr: 'https://127.0.0.1:8200',
+  vaultRootContext: 'v1',
+  vaultPrefix: '',
   allowMissing: false
 };
 
 function trimLeadingSlashes(path) {
-  if (!path.startsWith("/")) {
+  if (!path.startsWith('/')) {
     return path;
   }
-  return trimLeadingSlashes(path.replace(/^\//, ""));
+  return trimLeadingSlashes(path.replace(/^\//, ''));
 }
 
 function trimTrailingSlash(path) {
-  if (!path.endsWith("/")) {
+  if (!path.endsWith('/')) {
     return path;
   }
-  return trimTrailingSlash(path.replace(/\/$/, ""));
+  return trimTrailingSlash(path.replace(/\/$/, ''));
 }
 
 function trimPath(path) {
@@ -31,7 +31,7 @@ function trimPath(path) {
 function buildUrl({ addr, root, prefix }) {
   const trimmmedPrefix = trimPath(prefix);
   return `${trimTrailingSlash(addr)}/${trimPath(root)}/${
-    trimmmedPrefix ? `${trimmmedPrefix}/` : ""
+    trimmmedPrefix ? `${trimmmedPrefix}/` : ''
   }`;
 }
 
