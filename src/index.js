@@ -7,6 +7,7 @@ class ServerlessServiceConfig {
   constructor(serverless, options) {
     this.serverless = serverless;
     this.options = options;
+    this.serverlessLog = serverless.cli.log.bind(serverless.cli);
 
     this.variableResolvers = {
       serviceConfig: this.getServiceConfig.bind(this),
@@ -14,10 +15,36 @@ class ServerlessServiceConfig {
     };
   }
 
+  useLocalEnvVars() {
+    const { service_config_plugin } = this.serverless.service.custom;
+    const { provider } = this.serverless.service;
+
+    const stage = (this.options && this.options.stage) || (provider && provider.stage);
+
+    const { localEnvVarStages } = service_config_plugin;
+
+    if (localEnvVarStages && localEnvVarStages.includes(stage)) {
+      this.serverlessLog(`Service config will use local environment variables: 'custom.service_config_plugin.localEnvVarStages' includes current stage '${stage}'`);
+      return true;
+    }
+
+    return false;
+  }
+
+  static getEnvVar(path) {
+    const envVar = path.substring(path.lastIndexOf('/') + 1);
+
+    return process.env[envVar];
+  }
+
   // the serverless framework will always invoke this
   // function with param starting with 'serviceConfig:'
   async getServiceConfig(param = 'serviceConfig:') {
     const path = param.slice('serviceConfig:'.length);
+
+    if (this.useLocalEnvVars()) {
+      return ServerlessServiceConfig.getEnvVar(path);
+    }
 
     const { service_config_plugin } = this.serverless.service.custom;
 
@@ -30,6 +57,10 @@ class ServerlessServiceConfig {
   // function with param starting with 'secretConfig:'
   async getSecretConfig(param = 'secretConfig:') {
     const path = param.slice('secretConfig:'.length);
+
+    if (this.useLocalEnvVars()) {
+      return ServerlessServiceConfig.getEnvVar(path);
+    }
 
     const { service_config_plugin } = this.serverless.service.custom;
     const { stage } = this.serverless.service.provider;

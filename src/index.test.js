@@ -12,6 +12,152 @@ const ServerlessServiceConfig = proxyquire('./index', {
   './kms_config': { load: kmsConfigStub }
 });
 
+test('useLocalEnvVars', (t) => {
+  t.test('should return false when localEnvVarStages is not defined', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    },
+    {
+      stage: 'stage',
+    });
+
+    const value = await service.useLocalEnvVars();
+
+    assert.equal(value, false);
+  });
+
+  t.test('should return true when stage defined in options is listed in localEnvVarStages', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+            localEnvVarStages: ['stage'],
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    },
+    {
+      stage: 'stage',
+    });
+
+    const value = await service.useLocalEnvVars();
+
+    assert.equal(value, true);
+  });
+
+  t.test('should return false when stage defined in options is NOT listed in localEnvVarStages', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+            localEnvVarStages: ['other stage'],
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    },
+    {
+      stage: 'stage',
+    });
+
+    const value = await service.useLocalEnvVars();
+
+    assert.equal(value, false);
+  });
+
+  t.test('should fallback to provider and return true when stage defined in provider is listed in localEnvVarStages', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        provider: {
+          stage: 'stage',
+        },
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+            localEnvVarStages: ['stage'],
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    });
+
+    const value = await service.useLocalEnvVars();
+
+    assert.equal(value, true);
+  });
+
+  t.test('should fallback to provider and return false when stage defined in provider is NOT listed in localEnvVarStages', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        provider: {
+          stage: 'stage',
+        },
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+            localEnvVarStages: ['other stage'],
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    });
+
+    const value = await service.useLocalEnvVars();
+
+    assert.equal(value, false);
+  });
+});
+
 test('serviceConfig', (t) => {
   t.test('should call consul to get config', async (assert) => {
     assert.plan(1);
@@ -30,12 +176,55 @@ test('serviceConfig', (t) => {
             consulPrefix: 'prefix'
           }
         }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
       }
     });
 
     const value = await service.getServiceConfig('serviceConfig:config_path/key');
 
     assert.equal(value, 'a sample value');
+  });
+
+  t.test('should use process.env to get config when `useLocalEnvVars` is true', async (assert) => {
+    assert.plan(1);
+
+    consulStub.reset();
+
+    process.env.key = 'an env var value';
+
+    consulStub
+      .withArgs('http://consul/v1/kv/prefix/config_path/key')
+      .resolves('a sample value');
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        provider: {
+          stage: 'stage',
+        },
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+            localEnvVarStages: ['other', 'stage'],
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    });
+
+    const value = await service.getServiceConfig('serviceConfig:config_path/key');
+
+    assert.equal(value, 'an env var value');
   });
 });
 
@@ -58,6 +247,12 @@ test('secretConfig', (t) => {
             vaultAddr: 'http://vault_server',
             kmsKeyId,
           }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
         }
       }
     };
@@ -96,6 +291,12 @@ test('secretConfig', (t) => {
             kmsKeyConsulPath,
           }
         }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
       }
     };
 
@@ -132,6 +333,12 @@ test('secretConfig', (t) => {
         custom: {
           service_config_plugin: {}
         }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
       }
     });
 
@@ -157,6 +364,12 @@ test('secretConfig', (t) => {
             }
           }
         }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
       }
     });
 
@@ -165,5 +378,53 @@ test('secretConfig', (t) => {
     } catch (e) {
       assert.match(e.message, /^KMS Key Id missing/);
     }
+  });
+
+  t.test('should use process.env to get secret config when `useLocalEnvVars` is true', async (assert) => {
+    assert.plan(1);
+
+    process.env.key = 'an env var value';
+
+    const fakeKms = {};
+    const kmsKeyId = {
+      stage: 'kmsKeyId'
+    };
+    const slsConfig = {
+      service: {
+        provider: {
+          stage: 'stage'
+        },
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            vaultAddr: 'http://vault_server',
+            kmsKeyId,
+            localEnvVarStages: ['other', 'stage'],
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    };
+
+    vault2kmsStub.reset();
+    vault2kmsStub
+      .withArgs('http://consul/v1/kv/vault/my_secret/secret', 'http://vault_server/v1/', fakeKms, 'kmsKeyId')
+      .resolves('a base64 encrypted secret');
+
+    kmsConfigStub.reset();
+    kmsConfigStub
+      .withArgs(slsConfig)
+      .returns(fakeKms);
+
+    const service = new ServerlessServiceConfig(slsConfig);
+
+    const value = await service.getServiceConfig('secretConfig:config_path/key');
+
+    assert.equal(value, 'an env var value');
   });
 });
