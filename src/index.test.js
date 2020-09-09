@@ -12,6 +12,152 @@ const ServerlessServiceConfig = proxyquire('./index', {
   './kms_config': { load: kmsConfigStub }
 });
 
+test('useLocalEnvVars', (t) => {
+  t.test('should return false when localEnvVarStages is not defined', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    },
+    {
+      stage: 'stage',
+    });
+
+    const value = await service.useLocalEnvVars();
+
+    assert.equal(value, false);
+  });
+
+  t.test('should return true when stage defined in options is listed in localEnvVarStages', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+            localEnvVarStages: ['stage'],
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    },
+    {
+      stage: 'stage',
+    });
+
+    const value = await service.useLocalEnvVars();
+
+    assert.equal(value, true);
+  });
+
+  t.test('should return false when stage defined in options is NOT listed in localEnvVarStages', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+            localEnvVarStages: ['other stage'],
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    },
+    {
+      stage: 'stage',
+    });
+
+    const value = await service.useLocalEnvVars();
+
+    assert.equal(value, false);
+  });
+
+  t.test('should fallback to provider and return true when stage defined in provider is listed in localEnvVarStages', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        provider: {
+          stage: 'stage',
+        },
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+            localEnvVarStages: ['stage'],
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    });
+
+    const value = await service.useLocalEnvVars();
+
+    assert.equal(value, true);
+  });
+
+  t.test('should fallback to provider and return false when stage defined in provider is NOT listed in localEnvVarStages', async (assert) => {
+    assert.plan(1);
+
+    const service = new ServerlessServiceConfig({
+      service: {
+        provider: {
+          stage: 'stage',
+        },
+        custom: {
+          service_config_plugin: {
+            consulAddr: 'http://consul',
+            consulPrefix: 'prefix',
+            localEnvVarStages: ['other stage'],
+          }
+        }
+      },
+      cli: {
+        log(message) {
+          // eslint-disable-next-line no-console
+          console.log(message);
+        }
+      }
+    });
+
+    const value = await service.useLocalEnvVars();
+
+    assert.equal(value, false);
+  });
+});
+
 test('serviceConfig', (t) => {
   t.test('should call consul to get config', async (assert) => {
     assert.plan(1);
@@ -57,11 +203,14 @@ test('serviceConfig', (t) => {
 
     const service = new ServerlessServiceConfig({
       service: {
+        provider: {
+          stage: 'stage',
+        },
         custom: {
           service_config_plugin: {
             consulAddr: 'http://consul',
             consulPrefix: 'prefix',
-            useLocalEnvVars: true,
+            localEnvVarStages: ['other', 'stage'],
           }
         }
       },
@@ -250,7 +399,7 @@ test('secretConfig', (t) => {
             consulAddr: 'http://consul',
             vaultAddr: 'http://vault_server',
             kmsKeyId,
-            useLocalEnvVars: true,
+            localEnvVarStages: ['other', 'stage'],
           }
         }
       },

@@ -17,9 +17,14 @@ class ServerlessServiceConfig {
 
   useLocalEnvVars() {
     const { service_config_plugin } = this.serverless.service.custom;
+    const { provider } = this.serverless.service;
 
-    if (service_config_plugin.useLocalEnvVars) {
-      this.serverlessLog('Service config will use local environment variables: `custom.service_config_plugin.useLocalEnvVars` evaluates to true');
+    const stage = (this.options && this.options.stage) || (provider && provider.stage);
+
+    const { localEnvVarStages } = service_config_plugin;
+
+    if (localEnvVarStages && localEnvVarStages.includes(stage)) {
+      this.serverlessLog(`Service config will use local environment variables: 'custom.service_config_plugin.localEnvVarStages' includes current stage '${stage}'`);
       return true;
     }
 
