@@ -106,3 +106,16 @@ test('${serviceConfig:${self:custom.serviceConfigPath}/${self:provider.stage}/Co
     fallback: 'oui'
   });
 });
+
+test('${serviceConfig:global/config.json/IP-aliases/OFFICES}', async (assert) => {
+  assert.plan(1);
+
+  const input = 'serviceConfig:global/config.json/IP-aliases/OFFICES';
+
+  const result = target(input);
+
+  assert.deepEqual(result, {
+    path: 'global/config.json/IP-aliases/OFFICES',
+    fallback: null
+  });
+});
