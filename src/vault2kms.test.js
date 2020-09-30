@@ -26,18 +26,16 @@ test('should retrieve secret path from Consul, secret from Vault and encrypt wit
   requestStub.reset();
   kmsStub.reset();
 
-  consulStub
-    .withArgs('path/to/secret')
-    .resolves('secret/path');
+  consulStub.withArgs('path/to/secret').resolves('secret/path');
 
   requestStub
     .withArgs({
       method: 'GET',
       url: 'http://vault/secret/path',
       headers: {
-        'X-Vault-Token': 'vault_token',
+        'X-Vault-Token': 'vault_token'
       },
-      json: true,
+      json: true
     })
     .resolves({
       data: {
@@ -51,12 +49,19 @@ test('should retrieve secret path from Consul, secret from Vault and encrypt wit
       Plaintext: 'fake_secret'
     })
     .returns({
-      promise: () => Promise.resolve({
-        CiphertextBlob: Buffer.from('encrypted:fake_secret')
-      })
+      promise: () =>
+        // eslint-disable-next-line implicit-arrow-linebreak
+        Promise.resolve({
+          CiphertextBlob: Buffer.from('encrypted:fake_secret')
+        })
     });
 
-  const encryptedSecret = await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+  const encryptedSecret = await vault2kms.retrieveAndEncrypt(
+    'path/to/secret',
+    'http://vault/',
+    kms,
+    'kmsKeyId'
+  );
 
   assert.equal(encryptedSecret, 'ZW5jcnlwdGVkOmZha2Vfc2VjcmV0');
 });
@@ -64,15 +69,9 @@ test('should retrieve secret path from Consul, secret from Vault and encrypt wit
 test('should throw if no data is returned from Vault', async (assert) => {
   consulStub.reset();
 
-  consulStub
-    .withArgs('path/to/secret')
-    .resolves('secret/path');
+  consulStub.withArgs('path/to/secret').resolves('secret/path');
 
-  const expectedVaultResponses = [
-    { data: {} },
-    {},
-    null
-  ];
+  const expectedVaultResponses = [{ data: {} }, {}, null];
 
   assert.plan(expectedVaultResponses.length);
 
@@ -91,9 +90,7 @@ test('should throw if no data is returned from Vault', async (assert) => {
 test('should throw friendler exception when Vault returns 404', async (assert) => {
   consulStub.reset();
 
-  consulStub
-    .withArgs('path/to/secret')
-    .resolves('secret/path');
+  consulStub.withArgs('path/to/secret').resolves('secret/path');
 
   const notFoundError = new Error('404 - not found');
   notFoundError.statusCode = 404;
@@ -114,21 +111,15 @@ test('should throw if encrypted secret cannot be retrieved', async (assert) => {
   consulStub.reset();
   requestStub.reset();
 
-  consulStub
-    .withArgs('path/to/secret')
-    .resolves('secret/path');
+  consulStub.withArgs('path/to/secret').resolves('secret/path');
 
-  requestStub
-    .resolves({
-      data: {
-        value: 'fake_secret'
-      }
-    });
+  requestStub.resolves({
+    data: {
+      value: 'fake_secret'
+    }
+  });
 
-  const expectedKmsResponses = [
-    { data: null },
-    null
-  ];
+  const expectedKmsResponses = [{ data: null }, null];
 
   assert.plan(expectedKmsResponses.length);
 
@@ -146,6 +137,42 @@ test('should throw if encrypted secret cannot be retrieved', async (assert) => {
   }
 });
 
+test('should return fallback if defined and key not present', async (assert) => {
+  assert.plan(1);
+  consulStub.reset();
+  consulStub.withArgs('path/to/secret').resolves('fallback');
+
+  const notFoundError = new Error('404 - not found');
+  notFoundError.statusCode = 404;
+
+  requestStub.reset();
+  requestStub.rejects(notFoundError);
+
+  kmsStub.reset();
+  kmsStub
+    .withArgs({
+      KeyId: 'kmsKeyId',
+      Plaintext: 'fallback'
+    })
+    .returns({
+      promise: () =>
+        // eslint-disable-next-line implicit-arrow-linebreak
+        Promise.resolve({
+          CiphertextBlob: Buffer.from('encrypted:fallback')
+        })
+    });
+
+  const encryptedSecret = await vault2kms.retrieveAndEncrypt(
+    'path/to/secret',
+    'http://vault/',
+    kms,
+    'kmsKeyId',
+    'fallback'
+  );
+
+  assert.equal(encryptedSecret, 'ZW5jcnlwdGVkOmZhbGxiYWNr');
+});
+
 test('after - unset fake vault token', (t) => {
   delete process.env.VAULT_TOKEN;
   t.end();
@@ -157,6 +184,9 @@ test('should fail if vault token not present', async (assert) => {
   try {
     await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
   } catch (e) {
-    assert.equal(e.message, 'Missing vault token for authentication, you need to set VAULT_TOKEN as a environment variable');
+    assert.equal(
+      e.message,
+      'Missing vault token for authentication, you need to set VAULT_TOKEN as a environment variable'
+    );
   }
 });
