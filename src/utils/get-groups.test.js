@@ -80,3 +80,29 @@ test('${serviceConfig:${self:custom.serviceConfigPath}/ConfigMap/COMMON_NAMESPAC
     fallback: 'foo'
   });
 });
+
+test('${serviceConfig:${self:custom.serviceConfigPath}/${self:provider.stage}/ConfigMap/PIERRE_IS_THE_BEST}', async (assert) => {
+  assert.plan(1);
+
+  const input = 'serviceConfig:${self:custom.serviceConfigPath}/${self:provider.stage}/ConfigMap/PIERRE_IS_THE_BEST';
+
+  const result = target(input);
+
+  assert.deepEqual(result, {
+    path: '${self:custom.serviceConfigPath}/${self:provider.stage}/ConfigMap/PIERRE_IS_THE_BEST',
+    fallback: null
+  });
+});
+
+test('${serviceConfig:${self:custom.serviceConfigPath}/${self:provider.stage}/ConfigMap/PIERRE_IS_THE_BEST, oui}', async (assert) => {
+  assert.plan(1);
+
+  const input = 'serviceConfig:${self:custom.serviceConfigPath}/${self:provider.stage}/ConfigMap/PIERRE_IS_THE_BEST, oui';
+
+  const result = target(input);
+
+  assert.deepEqual(result, {
+    path: '${self:custom.serviceConfigPath}/${self:provider.stage}/ConfigMap/PIERRE_IS_THE_BEST',
+    fallback: 'oui'
+  });
+});
