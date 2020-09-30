@@ -2,16 +2,7 @@ const consul = require('./consul');
 const vault2kms = require('./vault2kms');
 const pluginConfig = require('./plugin_config');
 const kmsConfig = require('./kms_config');
-
-const getGroups = (param) => {
-  const regex = new RegExp('[serviceConfig|secretConfig]:([\\w\\/:\\.$\\{\\}]+),?\\s?([\\"\\w]+)?');
-  // eslint-disable-next-line no-unused-vars
-  const [full, path, fallback = null] = param.match(regex);
-  return {
-    path,
-    fallback: fallback ? fallback.trim() : null
-  };
-};
+const getGroups = require('./utils/get-groups');
 
 class ServerlessServiceConfig {
   constructor(serverless, options) {

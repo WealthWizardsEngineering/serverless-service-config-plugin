@@ -19,9 +19,9 @@ test('should retrieve data from consul', async (assert) => {
     .withArgs({
       url: 'http://consul/kv/myKey',
       headers: {
-        'X-Consul-Token': 'myToken'
+        'X-Consul-Token': 'myToken',
       },
-      json: true
+      json: true,
     })
     .resolves([{ Value: 'dGhpcyBpcyBteSBjb25maWcgdmFsdWU=' }]);
 
@@ -84,7 +84,7 @@ test('should fail if consul token not present', async (assert) => {
   } catch (e) {
     assert.equal(
       e.message,
-      'Missing consul token for authentication, you need to set CONSUL_TOKEN as a environment variable'
+      'Missing consul token for authentication, you need to set CONSUL_TOKEN as a environment variable',
     );
   }
 });
