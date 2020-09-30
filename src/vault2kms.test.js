@@ -50,6 +50,7 @@ test('should retrieve secret path from Consul, secret from Vault and encrypt wit
     })
     .returns({
       promise: () =>
+        // eslint-disable-next-line implicit-arrow-linebreak
         Promise.resolve({
           CiphertextBlob: Buffer.from('encrypted:fake_secret')
         })
@@ -155,6 +156,7 @@ test('should return fallback if defined and key not present', async (assert) => 
     })
     .returns({
       promise: () =>
+        // eslint-disable-next-line implicit-arrow-linebreak
         Promise.resolve({
           CiphertextBlob: Buffer.from('encrypted:fallback')
         })

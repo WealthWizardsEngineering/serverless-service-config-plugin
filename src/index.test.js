@@ -272,7 +272,6 @@ test('secretConfig', (t) => {
   t.test('should query vault with fallback', async (assert) => {
     assert.plan(1);
 
-    const fakeKms = {};
     const kmsKeyId = {
       stage: 'kmsKeyId'
     };
