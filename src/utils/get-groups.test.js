@@ -1,3 +1,4 @@
+/* eslint no-template-curly-in-string: 0 */
 const test = require('tape');
 
 const target = require('./get-groups');
