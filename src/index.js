@@ -3,6 +3,15 @@ const vault2kms = require('./vault2kms');
 const pluginConfig = require('./plugin_config');
 const kmsConfig = require('./kms_config');
 
+const getGroups = (param) => {
+  const regex = new RegExp('[serviceConfig|secretConfig]:([\\w\\/:\\.$\\{\\}]+),?\\s?([\\"\\w]+)?');
+  const [full, path, fallback = null] = param.match(regex);
+  return {
+    path,
+    fallback: fallback ? fallback.trim() : null
+  };
+};
+
 class ServerlessServiceConfig {
   constructor(serverless, options) {
     this.serverless = serverless;
@@ -11,7 +20,7 @@ class ServerlessServiceConfig {
 
     this.variableResolvers = {
       serviceConfig: this.getServiceConfig.bind(this),
-      secretConfig: this.getSecretConfig.bind(this),
+      secretConfig: this.getSecretConfig.bind(this)
     };
   }
 
@@ -24,7 +33,9 @@ class ServerlessServiceConfig {
     const { localEnvVarStages } = service_config_plugin;
 
     if (localEnvVarStages && localEnvVarStages.includes(stage)) {
-      this.serverlessLog(`Service config will use local environment variables: 'custom.service_config_plugin.localEnvVarStages' includes current stage '${stage}'`);
+      this.serverlessLog(
+        `Service config will use local environment variables: 'custom.service_config_plugin.localEnvVarStages' includes current stage '${stage}'`
+      );
       return true;
     }
 
@@ -40,23 +51,20 @@ class ServerlessServiceConfig {
   // the serverless framework will always invoke this
   // function with param starting with 'serviceConfig:'
   async getServiceConfig(param = 'serviceConfig:') {
-    const path = param.slice('serviceConfig:'.length);
-
+    const { path, fallback } = getGroups(param);
     if (this.useLocalEnvVars()) {
       return ServerlessServiceConfig.getEnvVar(path);
     }
-
     const { service_config_plugin } = this.serverless.service.custom;
-
     const config = pluginConfig.load(service_config_plugin);
 
-    return consul.get(`${config.consulUrl()}${path}`);
+    return consul.get(`${config.consulUrl()}${path}`, fallback);
   }
 
   // the serverless framework will always invoke this
   // function with param starting with 'secretConfig:'
   async getSecretConfig(param = 'secretConfig:') {
-    const path = param.slice('secretConfig:'.length);
+    const { path, fallback } = getGroups(param);
 
     if (this.useLocalEnvVars()) {
       return ServerlessServiceConfig.getEnvVar(path);
@@ -75,9 +83,17 @@ class ServerlessServiceConfig {
     } else if (kmsKeyId[stage]) {
       kmsKeyIdValue = kmsKeyId[stage];
     } else {
-      throw new Error(`KMS Key Id missing, please specify it in in the plugin config with either:\nservice_config_plugin.kmsKeyConsulPath = path/to/key\n[DEPRECATED] service_config_plugin.kmsKeyId.${stage} = keyId`);
+      throw new Error(
+        `KMS Key Id missing, please specify it in in the plugin config with either:\nservice_config_plugin.kmsKeyConsulPath = path/to/key\n[DEPRECATED] service_config_plugin.kmsKeyId.${stage} = keyId`
+      );
     }
-    return vault2kms.retrieveAndEncrypt(`${config.consulUrl()}${path}`, config.vaultUrl(), kmsConfig.load(this.serverless), kmsKeyIdValue);
+    return vault2kms.retrieveAndEncrypt(
+      `${config.consulUrl()}${path}`,
+      config.vaultUrl(),
+      kmsConfig.load(this.serverless),
+      kmsKeyIdValue,
+      fallback
+    );
   }
 }
 

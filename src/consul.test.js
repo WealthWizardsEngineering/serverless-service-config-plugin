@@ -23,9 +23,7 @@ test('should retrieve data from consul', async (assert) => {
       },
       json: true
     })
-    .resolves([
-      { Value: 'dGhpcyBpcyBteSBjb25maWcgdmFsdWU=' }
-    ]);
+    .resolves([{ Value: 'dGhpcyBpcyBteSBjb25maWcgdmFsdWU=' }]);
 
   const consulValue = await consul.get('http://consul/kv/myKey');
 
@@ -33,11 +31,7 @@ test('should retrieve data from consul', async (assert) => {
 });
 
 test('should fail if no value is found', async (assert) => {
-  const expectedResponses = [
-    [{ otherKey: 'Value missing' }],
-    [],
-    null
-  ];
+  const expectedResponses = [[{ otherKey: 'Value missing' }], [], null];
 
   assert.plan(expectedResponses.length);
 
@@ -69,6 +63,14 @@ test('should display friendlier error when receiving 404 from Consul', async (as
   }
 });
 
+test('should return fallback if defined and key not present in consul', async (assert) => {
+  assert.plan(1);
+
+  const consulValue = await consul.get('http://consul/kv/myKey', 'fallback');
+
+  assert.equal(consulValue, 'fallback');
+});
+
 test('after', (t) => {
   delete process.env.CONSUL_TOKEN;
   t.end();
@@ -80,6 +82,9 @@ test('should fail if consul token not present', async (assert) => {
   try {
     await consul.get('http://consul/kv/myKey');
   } catch (e) {
-    assert.equal(e.message, 'Missing consul token for authentication, you need to set CONSUL_TOKEN as a environment variable');
+    assert.equal(
+      e.message,
+      'Missing consul token for authentication, you need to set CONSUL_TOKEN as a environment variable'
+    );
   }
 });
