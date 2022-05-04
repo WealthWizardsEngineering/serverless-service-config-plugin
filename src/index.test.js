@@ -199,7 +199,7 @@ test('serviceConfig', (t) => {
       }
     });
 
-    await service.getServiceConfig({address: 'config_path/key, "fallback"'});
+    await service.getServiceConfig({ address: 'config_path/key, "fallback"' });
     assert.true(consulSpy.calledWith('http://consul/v1/kv/prefix/config_path/key', '"fallback"'));
   });
 
@@ -208,7 +208,7 @@ test('serviceConfig', (t) => {
 
     consulStub.reset();
 
-    consulStub.withArgs('http://consul/v1/kv/prefix/config_path/key').resolves({value: 'a sample value'});
+    consulStub.withArgs('http://consul/v1/kv/prefix/config_path/key').resolves({ value: 'a sample value' });
 
     const service = new ServerlessServiceConfig({
       service: {
@@ -227,7 +227,7 @@ test('serviceConfig', (t) => {
       }
     });
 
-    const value = await service.getServiceConfig({address: 'config_path/key'});
+    const value = await service.getServiceConfig({ address: 'config_path/key' });
     assert.equal(value.value, 'a sample value');
   });
 
@@ -261,7 +261,7 @@ test('serviceConfig', (t) => {
       }
     });
 
-    const value = await service.getServiceConfig({address: 'config_path/key'});
+    const value = await service.getServiceConfig({ address: 'config_path/key' });
 
     assert.equal(value.value, 'an env var value');
   });
@@ -296,7 +296,7 @@ test('secretConfig', (t) => {
     };
 
     const service = new ServerlessServiceConfig(slsConfig);
-    await service.getSecretConfig({address: 'vault/my_secret/secret, "fallback"'});
+    await service.getSecretConfig({ address: 'vault/my_secret/secret, "fallback"' });
     assert.true(
       vault2kmsStub.calledWith(
         'http://consul/v1/kv/vault/my_secret/secret',
@@ -344,14 +344,14 @@ test('secretConfig', (t) => {
         fakeKms,
         'kmsKeyId'
       )
-      .resolves({'value': 'a base64 encrypted secret'});
+      .resolves({ value: 'a base64 encrypted secret' });
 
     kmsConfigStub.reset();
     kmsConfigStub.withArgs(slsConfig).returns(fakeKms);
 
     const service = new ServerlessServiceConfig(slsConfig);
 
-    const value = await service.getSecretConfig({address: 'vault/my_secret/secret'});
+    const value = await service.getSecretConfig({ address: 'vault/my_secret/secret' });
 
     assert.equal(value.value, 'a base64 encrypted secret');
   });
@@ -390,19 +390,19 @@ test('secretConfig', (t) => {
         fakeKms,
         'kmsKeyId'
       )
-      .resolves({'value': 'a base64 encrypted secret'});
+      .resolves({ value: 'a base64 encrypted secret' });
 
     kmsConfigStub.reset();
     kmsConfigStub.withArgs(slsConfig).returns(fakeKms);
 
     const getServiceConfigStub = sinon.stub();
-    getServiceConfigStub.withArgs({address: 'path/to/key_id'}).returns('kmsKeyId');
+    getServiceConfigStub.withArgs({ address: 'path/to/key_id' }).returns('kmsKeyId');
 
     const service = new ServerlessServiceConfig(slsConfig);
 
     service.getServiceConfig = getServiceConfigStub;
 
-    const value = await service.getSecretConfig({address: 'vault/my_secret/secret'});
+    const value = await service.getSecretConfig({ address: 'vault/my_secret/secret' });
 
     assert.equal(value.value, 'a base64 encrypted secret');
   });
@@ -428,7 +428,7 @@ test('secretConfig', (t) => {
     });
 
     try {
-      await service.getSecretConfig({address: 'vault/my_secret/secret'});
+      await service.getSecretConfig({ address: 'vault/my_secret/secret' });
     } catch (e) {
       assert.match(e.message, /^KMS Key Id missing/);
     }
@@ -459,7 +459,7 @@ test('secretConfig', (t) => {
     });
 
     try {
-      await service.getSecretConfig({address: 'vault/my_secret/secret'});
+      await service.getSecretConfig({ address: 'vault/my_secret/secret' });
     } catch (e) {
       assert.match(e.message, /^KMS Key Id missing/);
     }
@@ -514,7 +514,7 @@ test('secretConfig', (t) => {
 
       const service = new ServerlessServiceConfig(slsConfig);
 
-      const value = await service.getServiceConfig({address: 'config_path/key'});
+      const value = await service.getServiceConfig({ address: 'config_path/key' });
 
       assert.equal(value.value, 'an env var value');
     }

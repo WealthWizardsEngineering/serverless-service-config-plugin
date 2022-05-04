@@ -40,12 +40,12 @@ class ServerlessServiceConfig {
   static getEnvVar(path) {
     const envVar = path.substring(path.lastIndexOf('/') + 1);
 
-    return {value: process.env[envVar]};
+    return { value: process.env[envVar] };
   }
 
   async getServiceConfig(param) {
     // console.log(param)
-    const { path, fallback } = getGroups( param.address);
+    const { path, fallback } = getGroups(param.address);
     // console.log(path)
     // const path = param.address
     if (this.useLocalEnvVars()) {
@@ -54,10 +54,10 @@ class ServerlessServiceConfig {
     const { service_config_plugin } = this.serverless.service.custom;
     const config = pluginConfig.load(service_config_plugin);
 
-    return consul.get(`${config.consulUrl()}${path}`, fallback)
+    return consul.get(`${config.consulUrl()}${path}`, fallback);
   }
 
-  async getSecretConfig(param ) {
+  async getSecretConfig(param) {
     const { path, fallback } = getGroups(param.address);
 
     if (this.useLocalEnvVars()) {
@@ -72,7 +72,7 @@ class ServerlessServiceConfig {
     const { kmsKeyId = {}, kmsKeyConsulPath } = config;
     let kmsKeyIdValue;
     if (kmsKeyConsulPath && typeof kmsKeyConsulPath === 'string') {
-      kmsKeyIdValue = await this.getServiceConfig({address: kmsKeyConsulPath});
+      kmsKeyIdValue = await this.getServiceConfig({ address: kmsKeyConsulPath });
     } else if (kmsKeyId[stage]) {
       kmsKeyIdValue = kmsKeyId[stage];
     } else {
@@ -87,7 +87,7 @@ class ServerlessServiceConfig {
       kmsConfig.load(this.serverless),
       kmsKeyIdValue,
       fallback
-    )
+    );
   }
 }
 
