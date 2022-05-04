@@ -1,6 +1,7 @@
 const aws = require('aws-sdk');
 
 const load = (serverlessConfig = {}) => {
+  console.log(serverlessConfig)
   const awsConfig = {};
 
   const { service, variables } = serverlessConfig;

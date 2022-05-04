@@ -16,14 +16,18 @@ async function get(url, fallback = null) {
     });
 
     if (consulData && consulData[0] && consulData[0].Value) {
-      return Buffer.from(consulData[0].Value, 'base64').toString();
+      return {
+        value: Buffer.from(consulData[0].Value, 'base64').toString()
+      };
     }
   } catch (e) {
     if (e.statusCode !== 404) throw e;
   }
 
   if (fallback) {
-    return fallback;
+    return {
+      value: fallback
+    };
   }
   throw new Error(`Missing value in Consul at ${url}`);
 }

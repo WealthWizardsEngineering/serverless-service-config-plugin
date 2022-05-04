@@ -63,7 +63,7 @@ test('should retrieve secret path from Consul, secret from Vault and encrypt wit
     'kmsKeyId'
   );
 
-  assert.equal(encryptedSecret, 'ZW5jcnlwdGVkOmZha2Vfc2VjcmV0');
+  assert.equal(encryptedSecret.value, 'ZW5jcnlwdGVkOmZha2Vfc2VjcmV0');
 });
 
 test('should throw if no data is returned from Vault', async (assert) => {
@@ -170,7 +170,7 @@ test('should return fallback if defined and key not present', async (assert) => 
     'fallback'
   );
 
-  assert.equal(encryptedSecret, 'ZW5jcnlwdGVkOmZhbGxiYWNr');
+  assert.equal(encryptedSecret.value, 'ZW5jcnlwdGVkOmZhbGxiYWNr');
 });
 
 test('after - unset fake vault token', (t) => {

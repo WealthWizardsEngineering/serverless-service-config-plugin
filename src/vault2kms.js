@@ -30,7 +30,9 @@ const kmsEncrypt = async (params, kms) => {
   const data = await kms.encrypt(params).promise();
 
   if (data && data.CiphertextBlob) {
-    return data.CiphertextBlob.toString('base64');
+    return {
+      value: data.CiphertextBlob.toString('base64')
+    };
   }
 
   throw new Error('Missing encrypted secret value from AWS response');
