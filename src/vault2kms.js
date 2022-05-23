@@ -44,8 +44,7 @@ const retrieveAndEncrypt = async (path, vaultPrefix, kms, kmsKeyId, fallback = n
       'Missing vault token for authentication, you need to set VAULT_TOKEN as a environment variable'
     );
   }
-  const secretPath = await consul.get(path, fallback);
-  const secretValue = await getSecretFromVault(secretPath, vaultPrefix, fallback);
+  const secretValue = await getSecretFromVault(path, vaultPrefix, fallback);
   return kmsEncrypt(
     {
       KeyId: kmsKeyId,

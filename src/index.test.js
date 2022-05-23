@@ -179,7 +179,7 @@ test('useLocalEnvVars', (t) => {
   );
 });
 
-test('serviceConfig', (t) => {
+test('consul', (t) => {
   t.test('should call consul with fallback', async (assert) => {
     assert.plan(1);
     const service = new ServerlessServiceConfig({
@@ -267,7 +267,7 @@ test('serviceConfig', (t) => {
   });
 });
 
-test('secretConfig', (t) => {
+test('vault', (t) => {
   t.test('should query vault with fallback', async (assert) => {
     assert.plan(1);
 
@@ -299,7 +299,7 @@ test('secretConfig', (t) => {
     await service.getSecretConfig({ address: 'vault/my_secret/secret, "fallback"' });
     assert.true(
       vault2kmsStub.calledWith(
-        'http://consul/v1/kv/vault/my_secret/secret',
+        'vault/my_secret/secret',
         'http://vault_server/v1/',
         undefined,
         'kmsKeyId',
@@ -339,7 +339,7 @@ test('secretConfig', (t) => {
     vault2kmsStub.reset();
     vault2kmsStub
       .withArgs(
-        'http://consul/v1/kv/vault/my_secret/secret',
+        'vault/my_secret/secret',
         'http://vault_server/v1/',
         fakeKms,
         'kmsKeyId'
@@ -385,7 +385,7 @@ test('secretConfig', (t) => {
     vault2kmsStub.reset();
     vault2kmsStub
       .withArgs(
-        'http://consul/v1/kv/vault/my_secret/secret',
+        'vault/my_secret/secret',
         'http://vault_server/v1/',
         fakeKms,
         'kmsKeyId'
@@ -396,7 +396,7 @@ test('secretConfig', (t) => {
     kmsConfigStub.withArgs(slsConfig).returns(fakeKms);
 
     const getServiceConfigStub = sinon.stub();
-    getServiceConfigStub.withArgs({ address: 'path/to/key_id' }).returns('kmsKeyId');
+    getServiceConfigStub.withArgs({ address: 'path/to/key_id' }).returns({'value': 'kmsKeyId'});
 
     const service = new ServerlessServiceConfig(slsConfig);
 

@@ -10,10 +10,10 @@ class ServerlessServiceConfig {
     this.options = options;
     this.serverlessLog = serverless.cli.log.bind(serverless.cli);
     this.configurationVariablesSources = {
-      serviceConfig: {
+      consul: {
         resolve: this.getServiceConfig.bind(this)
       },
-      secretConfig: {
+      vault: {
         resolve: this.getSecretConfig.bind(this)
       }
     };
@@ -44,10 +44,7 @@ class ServerlessServiceConfig {
   }
 
   async getServiceConfig(param) {
-    // console.log(param)
     const { path, fallback } = getGroups(param.address);
-    // console.log(path)
-    // const path = param.address
     if (this.useLocalEnvVars()) {
       return ServerlessServiceConfig.getEnvVar(path);
     }
@@ -71,8 +68,10 @@ class ServerlessServiceConfig {
 
     const { kmsKeyId = {}, kmsKeyConsulPath } = config;
     let kmsKeyIdValue;
+    console.log(kmsKeyId, kmsKeyConsulPath)
     if (kmsKeyConsulPath && typeof kmsKeyConsulPath === 'string') {
       kmsKeyIdValue = await this.getServiceConfig({ address: kmsKeyConsulPath });
+      kmsKeyIdValue = kmsKeyIdValue.value
     } else if (kmsKeyId[stage]) {
       kmsKeyIdValue = kmsKeyId[stage];
     } else {
@@ -82,7 +81,7 @@ class ServerlessServiceConfig {
     }
 
     return vault2kms.retrieveAndEncrypt(
-      `${config.consulUrl()}${path}`,
+      path,
       config.vaultUrl(),
       kmsConfig.load(this.serverless),
       kmsKeyIdValue,

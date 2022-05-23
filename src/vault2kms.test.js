@@ -19,14 +19,11 @@ test('before - fake vault token', (t) => {
   t.end();
 });
 
-test('should retrieve secret path from Consul, secret from Vault and encrypt with KMS', async (assert) => {
+test('should retrieve secret from Vault and encrypt with KMS', async (assert) => {
   assert.plan(1);
 
-  consulStub.reset();
   requestStub.reset();
   kmsStub.reset();
-
-  consulStub.withArgs('path/to/secret').resolves('secret/path');
 
   requestStub
     .withArgs({
@@ -57,7 +54,7 @@ test('should retrieve secret path from Consul, secret from Vault and encrypt wit
     });
 
   const encryptedSecret = await vault2kms.retrieveAndEncrypt(
-    'path/to/secret',
+    'secret/path',
     'http://vault/',
     kms,
     'kmsKeyId'
@@ -67,9 +64,6 @@ test('should retrieve secret path from Consul, secret from Vault and encrypt wit
 });
 
 test('should throw if no data is returned from Vault', async (assert) => {
-  consulStub.reset();
-
-  consulStub.withArgs('path/to/secret').resolves('secret/path');
 
   const expectedVaultResponses = [{ data: {} }, {}, null];
 
@@ -80,7 +74,7 @@ test('should throw if no data is returned from Vault', async (assert) => {
     requestStub.resolves(response);
 
     try {
-      await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+      await vault2kms.retrieveAndEncrypt('secret/path', 'http://vault/', kms, 'kmsKeyId');
     } catch (e) {
       assert.equal(e.message, 'Missing secret in Vault at secret/path');
     }
@@ -88,10 +82,6 @@ test('should throw if no data is returned from Vault', async (assert) => {
 });
 
 test('should throw friendler exception when Vault returns 404', async (assert) => {
-  consulStub.reset();
-
-  consulStub.withArgs('path/to/secret').resolves('secret/path');
-
   const notFoundError = new Error('404 - not found');
   notFoundError.statusCode = 404;
 
@@ -101,7 +91,7 @@ test('should throw friendler exception when Vault returns 404', async (assert) =
   requestStub.rejects(notFoundError);
 
   try {
-    await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+    await vault2kms.retrieveAndEncrypt('secret/path', 'http://vault/', kms, 'kmsKeyId');
   } catch (e) {
     assert.equal(e.message, 'Missing secret in Vault at secret/path');
   }
