@@ -8,7 +8,7 @@ const load = (serverlessConfig = {}) => {
   if (service && service.provider && service.provider.region) {
     awsConfig.region = service.provider.region;
   }
-  
+
   return new aws.KMS(awsConfig);
 };
 

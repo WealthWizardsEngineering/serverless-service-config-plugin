@@ -64,7 +64,6 @@ test('should retrieve secret from Vault and encrypt with KMS', async (assert) =>
 });
 
 test('should throw if no data is returned from Vault', async (assert) => {
-
   const expectedVaultResponses = [{ data: {} }, {}, null];
 
   assert.plan(expectedVaultResponses.length);

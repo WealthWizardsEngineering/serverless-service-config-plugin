@@ -68,10 +68,9 @@ class ServerlessServiceConfig {
 
     const { kmsKeyId = {}, kmsKeyConsulPath } = config;
     let kmsKeyIdValue;
-    console.log(kmsKeyId, kmsKeyConsulPath)
     if (kmsKeyConsulPath && typeof kmsKeyConsulPath === 'string') {
       kmsKeyIdValue = await this.getServiceConfig({ address: kmsKeyConsulPath });
-      kmsKeyIdValue = kmsKeyIdValue.value
+      kmsKeyIdValue = kmsKeyIdValue.value;
     } else if (kmsKeyId[stage]) {
       kmsKeyIdValue = kmsKeyId[stage];
     } else {

@@ -396,7 +396,7 @@ test('vault', (t) => {
     kmsConfigStub.withArgs(slsConfig).returns(fakeKms);
 
     const getServiceConfigStub = sinon.stub();
-    getServiceConfigStub.withArgs({ address: 'path/to/key_id' }).returns({'value': 'kmsKeyId'});
+    getServiceConfigStub.withArgs({ address: 'path/to/key_id' }).returns({ value: 'kmsKeyId' });
 
     const service = new ServerlessServiceConfig(slsConfig);
 

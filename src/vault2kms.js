@@ -1,5 +1,4 @@
 const request = require('request-promise-native');
-const consul = require('./consul');
 
 const getSecretFromVault = async (secretPath, vaultPrefix, fallback) => {
   try {
