@@ -1,5 +1,4 @@
 const request = require('request-promise-native');
-const consul = require('./consul');
 
 const getSecretFromVault = async (secretPath, vaultPrefix, fallback) => {
   try {
@@ -30,7 +29,9 @@ const kmsEncrypt = async (params, kms) => {
   const data = await kms.encrypt(params).promise();
 
   if (data && data.CiphertextBlob) {
-    return data.CiphertextBlob.toString('base64');
+    return {
+      value: data.CiphertextBlob.toString('base64')
+    };
   }
 
   throw new Error('Missing encrypted secret value from AWS response');
@@ -42,8 +43,7 @@ const retrieveAndEncrypt = async (path, vaultPrefix, kms, kmsKeyId, fallback = n
       'Missing vault token for authentication, you need to set VAULT_TOKEN as a environment variable'
     );
   }
-  const secretPath = await consul.get(path, fallback);
-  const secretValue = await getSecretFromVault(secretPath, vaultPrefix, fallback);
+  const secretValue = await getSecretFromVault(path, vaultPrefix, fallback);
   return kmsEncrypt(
     {
       KeyId: kmsKeyId,

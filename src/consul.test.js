@@ -27,7 +27,7 @@ test('should retrieve data from consul', async (assert) => {
 
   const consulValue = await consul.get('http://consul/kv/myKey');
 
-  assert.equal(consulValue, 'this is my config value');
+  assert.equal(consulValue.value, 'this is my config value');
 });
 
 test('should fail if no value is found', async (assert) => {
@@ -68,7 +68,7 @@ test('should return fallback if defined and key not present in consul', async (a
 
   const consulValue = await consul.get('http://consul/kv/myKey', 'fallback');
 
-  assert.equal(consulValue, 'fallback');
+  assert.equal(consulValue.value, 'fallback');
 });
 
 test('after', (t) => {

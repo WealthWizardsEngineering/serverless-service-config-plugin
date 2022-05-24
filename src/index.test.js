@@ -179,7 +179,7 @@ test('useLocalEnvVars', (t) => {
   );
 });
 
-test('serviceConfig', (t) => {
+test('consul', (t) => {
   t.test('should call consul with fallback', async (assert) => {
     assert.plan(1);
     const service = new ServerlessServiceConfig({
@@ -199,7 +199,7 @@ test('serviceConfig', (t) => {
       }
     });
 
-    await service.getServiceConfig('serviceConfig:config_path/key, "fallback"');
+    await service.getServiceConfig({ address: 'config_path/key, "fallback"' });
     assert.true(consulSpy.calledWith('http://consul/v1/kv/prefix/config_path/key', '"fallback"'));
   });
 
@@ -208,7 +208,7 @@ test('serviceConfig', (t) => {
 
     consulStub.reset();
 
-    consulStub.withArgs('http://consul/v1/kv/prefix/config_path/key').resolves('a sample value');
+    consulStub.withArgs('http://consul/v1/kv/prefix/config_path/key').resolves({ value: 'a sample value' });
 
     const service = new ServerlessServiceConfig({
       service: {
@@ -227,9 +227,8 @@ test('serviceConfig', (t) => {
       }
     });
 
-    const value = await service.getServiceConfig('serviceConfig:config_path/key');
-
-    assert.equal(value, 'a sample value');
+    const value = await service.getServiceConfig({ address: 'config_path/key' });
+    assert.equal(value.value, 'a sample value');
   });
 
   t.test('should use process.env to get config when `useLocalEnvVars` is true', async (assert) => {
@@ -262,13 +261,13 @@ test('serviceConfig', (t) => {
       }
     });
 
-    const value = await service.getServiceConfig('serviceConfig:config_path/key');
+    const value = await service.getServiceConfig({ address: 'config_path/key' });
 
-    assert.equal(value, 'an env var value');
+    assert.equal(value.value, 'an env var value');
   });
 });
 
-test('secretConfig', (t) => {
+test('vault', (t) => {
   t.test('should query vault with fallback', async (assert) => {
     assert.plan(1);
 
@@ -297,10 +296,10 @@ test('secretConfig', (t) => {
     };
 
     const service = new ServerlessServiceConfig(slsConfig);
-    await service.getSecretConfig('secretConfig:vault/my_secret/secret, "fallback"');
+    await service.getSecretConfig({ address: 'vault/my_secret/secret, "fallback"' });
     assert.true(
       vault2kmsStub.calledWith(
-        'http://consul/v1/kv/vault/my_secret/secret',
+        'vault/my_secret/secret',
         'http://vault_server/v1/',
         undefined,
         'kmsKeyId',
@@ -340,21 +339,21 @@ test('secretConfig', (t) => {
     vault2kmsStub.reset();
     vault2kmsStub
       .withArgs(
-        'http://consul/v1/kv/vault/my_secret/secret',
+        'vault/my_secret/secret',
         'http://vault_server/v1/',
         fakeKms,
         'kmsKeyId'
       )
-      .resolves('a base64 encrypted secret');
+      .resolves({ value: 'a base64 encrypted secret' });
 
     kmsConfigStub.reset();
     kmsConfigStub.withArgs(slsConfig).returns(fakeKms);
 
     const service = new ServerlessServiceConfig(slsConfig);
 
-    const value = await service.getSecretConfig('secretConfig:vault/my_secret/secret');
+    const value = await service.getSecretConfig({ address: 'vault/my_secret/secret' });
 
-    assert.equal(value, 'a base64 encrypted secret');
+    assert.equal(value.value, 'a base64 encrypted secret');
   });
 
   t.test('should be able to get kms key id from consul', async (assert) => {
@@ -386,26 +385,26 @@ test('secretConfig', (t) => {
     vault2kmsStub.reset();
     vault2kmsStub
       .withArgs(
-        'http://consul/v1/kv/vault/my_secret/secret',
+        'vault/my_secret/secret',
         'http://vault_server/v1/',
         fakeKms,
         'kmsKeyId'
       )
-      .resolves('a base64 encrypted secret');
+      .resolves({ value: 'a base64 encrypted secret' });
 
     kmsConfigStub.reset();
     kmsConfigStub.withArgs(slsConfig).returns(fakeKms);
 
     const getServiceConfigStub = sinon.stub();
-    getServiceConfigStub.withArgs('serviceConfig:path/to/key_id').returns('kmsKeyId');
+    getServiceConfigStub.withArgs({ address: 'path/to/key_id' }).returns({ value: 'kmsKeyId' });
 
     const service = new ServerlessServiceConfig(slsConfig);
 
     service.getServiceConfig = getServiceConfigStub;
 
-    const value = await service.getSecretConfig('secretConfig:vault/my_secret/secret');
+    const value = await service.getSecretConfig({ address: 'vault/my_secret/secret' });
 
-    assert.equal(value, 'a base64 encrypted secret');
+    assert.equal(value.value, 'a base64 encrypted secret');
   });
 
   t.test('should fail if kms key id definition is missing', async (assert) => {
@@ -429,7 +428,7 @@ test('secretConfig', (t) => {
     });
 
     try {
-      await service.getSecretConfig('secretConfig:vault/my_secret/secret');
+      await service.getSecretConfig({ address: 'vault/my_secret/secret' });
     } catch (e) {
       assert.match(e.message, /^KMS Key Id missing/);
     }
@@ -460,7 +459,7 @@ test('secretConfig', (t) => {
     });
 
     try {
-      await service.getSecretConfig('secretConfig:vault/my_secret/secret');
+      await service.getSecretConfig({ address: 'vault/my_secret/secret' });
     } catch (e) {
       assert.match(e.message, /^KMS Key Id missing/);
     }
@@ -515,9 +514,9 @@ test('secretConfig', (t) => {
 
       const service = new ServerlessServiceConfig(slsConfig);
 
-      const value = await service.getServiceConfig('secretConfig:config_path/key');
+      const value = await service.getServiceConfig({ address: 'config_path/key' });
 
-      assert.equal(value, 'an env var value');
+      assert.equal(value.value, 'an env var value');
     }
   );
 });
