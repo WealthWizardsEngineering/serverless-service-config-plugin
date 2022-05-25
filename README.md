@@ -37,7 +37,7 @@ custom:
 ```
 
 ## Upgrade to plugin 1.0 / slsv3:
-Serverless v3 contained some [https://www.serverless.com/framework/docs/guides/upgrading-v3](major changes) to how custom variables and parameters are used, notably that arbitrary CLI parameters are no longer permitted. WealthWizards used these heavily. Thankfully they also added in params as a good alternative. When migrating a project to serverless framework v3 / v1.0 of this plugin, you will need be mindful of the following:
+Serverless v3 contained some [major changes](https://www.serverless.com/framework/docs/guides/upgrading-v3) to how custom variables and parameters are used, notably that arbitrary CLI parameters are no longer permitted. WealthWizards used these heavily. Thankfully they also added in params as a good alternative. When migrating a project to serverless framework v3 / v1.0 of this plugin, you will need be mindful of the following:
 
 - Any use of custom variables dependant on `opt` interpolation and custom cli vars will no longer work, e.g.
 ```yaml
