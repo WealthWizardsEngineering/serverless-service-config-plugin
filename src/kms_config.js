@@ -1,4 +1,4 @@
-const aws = require('aws-sdk');
+const { KMS } = require('@aws-sdk/client-kms');
 
 const load = (serverlessConfig = {}) => {
   const awsConfig = {};
@@ -9,7 +9,7 @@ const load = (serverlessConfig = {}) => {
     awsConfig.region = service.provider.region;
   }
 
-  return new aws.KMS(awsConfig);
+  return new KMS(awsConfig);
 };
 
 module.exports = {

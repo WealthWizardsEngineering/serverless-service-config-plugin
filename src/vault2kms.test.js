@@ -1,7 +1,7 @@
 const test = require('tape');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire').noCallThru();
-const { KMS } = require('aws-sdk');
+const { KMS } = require('@aws-sdk/client-kms');
 
 const kms = new KMS();
 
