@@ -45,12 +45,8 @@ test('should retrieve secret from Vault and encrypt with KMS', async (assert) =>
       KeyId: 'kmsKeyId',
       Plaintext: 'fake_secret'
     })
-    .returns({
-      promise: () =>
-        // eslint-disable-next-line implicit-arrow-linebreak
-        Promise.resolve({
-          CiphertextBlob: Buffer.from('encrypted:fake_secret')
-        })
+    .resolves({
+      CiphertextBlob: Buffer.from('encrypted:fake_secret')
     });
 
   const encryptedSecret = await vault2kms.retrieveAndEncrypt(
@@ -114,9 +110,7 @@ test('should throw if encrypted secret cannot be retrieved', async (assert) => {
 
   for (const response of expectedKmsResponses) {
     kmsStub.reset();
-    kmsStub.returns({
-      promise: () => Promise.resolve(response)
-    });
+    kmsStub.resolves(response);
 
     try {
       await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
@@ -143,12 +137,8 @@ test('should return fallback if defined and key not present', async (assert) => 
       KeyId: 'kmsKeyId',
       Plaintext: 'fallback'
     })
-    .returns({
-      promise: () =>
-        // eslint-disable-next-line implicit-arrow-linebreak
-        Promise.resolve({
-          CiphertextBlob: Buffer.from('encrypted:fallback')
-        })
+    .resolves({
+      CiphertextBlob: Buffer.from('encrypted:fallback')
     });
 
   const encryptedSecret = await vault2kms.retrieveAndEncrypt(
