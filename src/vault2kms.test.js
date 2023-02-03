@@ -20,7 +20,7 @@ test('before - fake vault token', (t) => {
 });
 
 test('should retrieve secret from Vault and encrypt with KMS', async (assert) => {
-  assert.plan(1);
+  assert.plan(3);
 
   requestStub.reset();
   kmsStub.reset();
@@ -41,10 +41,7 @@ test('should retrieve secret from Vault and encrypt with KMS', async (assert) =>
     });
 
   kmsStub
-    .withArgs({
-      KeyId: 'kmsKeyId',
-      Plaintext: 'fake_secret'
-    })
+    .onCall(0)
     .resolves({
       CiphertextBlob: Buffer.from('encrypted:fake_secret')
     });
@@ -57,6 +54,8 @@ test('should retrieve secret from Vault and encrypt with KMS', async (assert) =>
   );
 
   assert.equal(encryptedSecret.value, 'ZW5jcnlwdGVkOmZha2Vfc2VjcmV0');
+  assert.deepEquals('kmsKeyId', kmsStub.firstCall.args[0].KeyId);
+  assert.deepEquals('fake_secret', kmsStub.firstCall.args[0].Plaintext.toString('utf8'));
 });
 
 test('should throw if no data is returned from Vault', async (assert) => {
@@ -121,7 +120,7 @@ test('should throw if encrypted secret cannot be retrieved', async (assert) => {
 });
 
 test('should return fallback if defined and key not present', async (assert) => {
-  assert.plan(1);
+  assert.plan(3);
   consulStub.reset();
   consulStub.withArgs('path/to/secret').resolves('fallback');
 
@@ -133,10 +132,7 @@ test('should return fallback if defined and key not present', async (assert) => 
 
   kmsStub.reset();
   kmsStub
-    .withArgs({
-      KeyId: 'kmsKeyId',
-      Plaintext: 'fallback'
-    })
+    .onCall(0)
     .resolves({
       CiphertextBlob: Buffer.from('encrypted:fallback')
     });
@@ -150,6 +146,8 @@ test('should return fallback if defined and key not present', async (assert) => 
   );
 
   assert.equal(encryptedSecret.value, 'ZW5jcnlwdGVkOmZhbGxiYWNr');
+  assert.deepEquals('kmsKeyId', kmsStub.firstCall.args[0].KeyId);
+  assert.deepEquals('fallback', kmsStub.firstCall.args[0].Plaintext.toString('utf8'));
 });
 
 test('after - unset fake vault token', (t) => {
