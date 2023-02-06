@@ -1,6 +1,6 @@
 {
   "name": "serverless-service-config-plugin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Retrieve service configs and secrets from Consul and Vault",
   "main": "src/index.js",
   "scripts": {
