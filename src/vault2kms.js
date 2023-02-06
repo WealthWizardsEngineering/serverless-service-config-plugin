@@ -47,7 +47,7 @@ const retrieveAndEncrypt = async (path, vaultPrefix, kms, kmsKeyId, fallback = n
   return kmsEncrypt(
     {
       KeyId: kmsKeyId,
-      Plaintext: secretValue
+      Plaintext: Buffer.from(secretValue),
     },
     kms
   );
