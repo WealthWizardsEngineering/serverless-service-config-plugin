@@ -2,11 +2,9 @@ const request = require('request-promise-native');
 const { TextDecoder, TextEncoder } = require('util');
 
 const textEncoder = new TextEncoder('utf-8');
-const textDecoder = new TextDecoder('utf-8');
 
-const stringToBase64 = (str) => Buffer.from(str).toString('base64');
+const uint8ArrayToBase64 = (u8) => Buffer.from(u8).toString('base64');
 const stringToUint8Array = (str) => textEncoder.encode(str);
-const uint8ArrayToString = (uint8Array) => textDecoder.decode(uint8Array);
 
 const getSecretFromVault = async (secretPath, vaultPrefix, fallback) => {
   try {
@@ -38,7 +36,7 @@ const kmsEncrypt = async (params, kms) => {
 
   if (data && data.CiphertextBlob) {
     return {
-      value: stringToBase64(uint8ArrayToString(data.CiphertextBlob)),
+      value: uint8ArrayToBase64(data.CiphertextBlob),
     };
   }
 
@@ -52,13 +50,16 @@ const retrieveAndEncrypt = async (path, vaultPrefix, kms, kmsKeyId, fallback = n
     );
   }
   const secretValue = await getSecretFromVault(path, vaultPrefix, fallback);
-  return kmsEncrypt(
+
+  const encryptedValue = await kmsEncrypt(
     {
       KeyId: kmsKeyId,
       Plaintext: stringToUint8Array(secretValue),
     },
     kms
   );
+
+  return encryptedValue;
 };
 
 module.exports = {
