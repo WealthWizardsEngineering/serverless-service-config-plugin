@@ -2,14 +2,18 @@ const test = require('tape');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire').noCallThru();
 const { KMS } = require('@aws-sdk/client-kms');
+const { TextEncoder } = require('util');
+
+const stringToBase64 = (str) => Buffer.from(str).toString('base64');
+const stringToUint8Array = (str) => new TextEncoder('utf-8').encode(str);
 
 const kms = new KMS();
 
 const consulStub = sinon.stub();
 const requestStub = sinon.stub();
-const kmsStub = sinon.stub(kms, 'encrypt');
+const kmsEncryptStub = sinon.stub(kms, 'encrypt');
 
-const vault2kms = proxyquire('./vault2kms', {
+const { retrieveAndEncrypt } = proxyquire('./vault2kms', {
   'request-promise-native': requestStub,
   './consul': { get: consulStub }
 });
@@ -23,7 +27,7 @@ test('should retrieve secret from Vault and encrypt with KMS', async (assert) =>
   assert.plan(3);
 
   requestStub.reset();
-  kmsStub.reset();
+  kmsEncryptStub.reset();
 
   requestStub
     .withArgs({
@@ -40,13 +44,13 @@ test('should retrieve secret from Vault and encrypt with KMS', async (assert) =>
       }
     });
 
-  kmsStub
+  kmsEncryptStub
     .onCall(0)
     .resolves({
       CiphertextBlob: Buffer.from('encrypted:fake_secret')
     });
 
-  const encryptedSecret = await vault2kms.retrieveAndEncrypt(
+  const encryptedSecret = await retrieveAndEncrypt(
     'secret/path',
     'http://vault/',
     kms,
@@ -54,8 +58,8 @@ test('should retrieve secret from Vault and encrypt with KMS', async (assert) =>
   );
 
   assert.equal(encryptedSecret.value, 'ZW5jcnlwdGVkOmZha2Vfc2VjcmV0');
-  assert.deepEquals('kmsKeyId', kmsStub.firstCall.args[0].KeyId);
-  assert.deepEquals('fake_secret', kmsStub.firstCall.args[0].Plaintext.toString('utf8'));
+  assert.deepEquals('kmsKeyId', kmsEncryptStub.firstCall.args[0].KeyId);
+  assert.deepEquals(stringToUint8Array('fake_secret'), kmsEncryptStub.firstCall.args[0].Plaintext);
 });
 
 test('should throw if no data is returned from Vault', async (assert) => {
@@ -68,7 +72,7 @@ test('should throw if no data is returned from Vault', async (assert) => {
     requestStub.resolves(response);
 
     try {
-      await vault2kms.retrieveAndEncrypt('secret/path', 'http://vault/', kms, 'kmsKeyId');
+      await retrieveAndEncrypt('secret/path', 'http://vault/', kms, 'kmsKeyId');
     } catch (e) {
       assert.equal(e.message, 'Missing secret in Vault at secret/path');
     }
@@ -85,7 +89,7 @@ test('should throw friendler exception when Vault returns 404', async (assert) =
   requestStub.rejects(notFoundError);
 
   try {
-    await vault2kms.retrieveAndEncrypt('secret/path', 'http://vault/', kms, 'kmsKeyId');
+    await retrieveAndEncrypt('secret/path', 'http://vault/', kms, 'kmsKeyId');
   } catch (e) {
     assert.equal(e.message, 'Missing secret in Vault at secret/path');
   }
@@ -108,11 +112,11 @@ test('should throw if encrypted secret cannot be retrieved', async (assert) => {
   assert.plan(expectedKmsResponses.length);
 
   for (const response of expectedKmsResponses) {
-    kmsStub.reset();
-    kmsStub.resolves(response);
+    kmsEncryptStub.reset();
+    kmsEncryptStub.resolves(response);
 
     try {
-      await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+      await retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
     } catch (e) {
       assert.equal(e.message, 'Missing encrypted secret value from AWS response');
     }
@@ -130,14 +134,14 @@ test('should return fallback if defined and key not present', async (assert) => 
   requestStub.reset();
   requestStub.rejects(notFoundError);
 
-  kmsStub.reset();
-  kmsStub
+  kmsEncryptStub.reset();
+  kmsEncryptStub
     .onCall(0)
     .resolves({
       CiphertextBlob: Buffer.from('encrypted:fallback')
     });
 
-  const encryptedSecret = await vault2kms.retrieveAndEncrypt(
+  const encryptedSecret = await retrieveAndEncrypt(
     'path/to/secret',
     'http://vault/',
     kms,
@@ -146,8 +150,8 @@ test('should return fallback if defined and key not present', async (assert) => 
   );
 
   assert.equal(encryptedSecret.value, 'ZW5jcnlwdGVkOmZhbGxiYWNr');
-  assert.deepEquals('kmsKeyId', kmsStub.firstCall.args[0].KeyId);
-  assert.deepEquals('fallback', kmsStub.firstCall.args[0].Plaintext.toString('utf8'));
+  assert.deepEquals('kmsKeyId', kmsEncryptStub.firstCall.args[0].KeyId);
+  assert.deepEquals(stringToUint8Array('fallback'), kmsEncryptStub.firstCall.args[0].Plaintext);
 });
 
 test('after - unset fake vault token', (t) => {
@@ -159,7 +163,7 @@ test('should fail if vault token not present', async (assert) => {
   assert.plan(1);
 
   try {
-    await vault2kms.retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
+    await retrieveAndEncrypt('path/to/secret', 'http://vault/', kms, 'kmsKeyId');
   } catch (e) {
     assert.equal(
       e.message,
