@@ -32,7 +32,9 @@ const getSecretFromVault = async (secretPath, vaultPrefix, fallback) => {
 };
 
 const kmsEncrypt = async (params, kms) => {
+  console.log('kmsEncrypt 1', JSON.stringify({ params }));
   const data = await kms.encrypt(params);
+  console.log('kmsEncrypt 2', JSON.stringify({ data }));
 
   if (data && data.CiphertextBlob) {
     return {
