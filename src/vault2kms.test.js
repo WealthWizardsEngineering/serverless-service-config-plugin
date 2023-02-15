@@ -4,7 +4,6 @@ const proxyquire = require('proxyquire').noCallThru();
 const { KMS } = require('@aws-sdk/client-kms');
 const { TextEncoder } = require('util');
 
-const stringToBase64 = (str) => Buffer.from(str).toString('base64');
 const stringToUint8Array = (str) => new TextEncoder('utf-8').encode(str);
 
 const kms = new KMS();
