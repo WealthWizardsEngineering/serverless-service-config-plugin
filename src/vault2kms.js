@@ -1,5 +1,5 @@
 const request = require('request-promise-native');
-const { TextDecoder, TextEncoder } = require('util');
+const { TextEncoder } = require('util');
 
 const textEncoder = new TextEncoder('utf-8');
 
