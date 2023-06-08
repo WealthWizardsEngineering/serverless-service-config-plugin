@@ -1,5 +1,22 @@
-const request = require('request-promise-native');
+const axios = require('axios');
+const { Agent: HttpsAgent } = require('https');
+const { Agent } = require('http');
 const { TextEncoder } = require('util');
+
+const ERROR_PAGE_NOT_FOUND = 404;
+
+const GET_CONFIG = {
+  transformRequest: (r) => JSON.stringify(r),
+  httpAgent: new Agent({ keepAlive: true }),
+  httpsAgent: new HttpsAgent({ keepAlive: true }),
+  responseType: 'json',
+  transitional: {
+    silentJSONParsing: false,
+    forcedJSONParsing: true,
+    clarifyTimeoutError: false,
+  },
+  validateStatus: (s) => s < 300,
+};
 
 const textEncoder = new TextEncoder('utf-8');
 
@@ -8,20 +25,24 @@ const stringToUint8Array = (str) => textEncoder.encode(str);
 
 const getSecretFromVault = async (secretPath, vaultPrefix, fallback) => {
   try {
-    const vaultResponse = await request({
+    const response = await axios({
+      ...GET_CONFIG,
       method: 'GET',
       url: `${vaultPrefix}${secretPath}`,
       headers: {
-        'X-Vault-Token': process.env.VAULT_TOKEN
+        'content-type': 'application/json',
+        'X-Vault-Token': process.env.VAULT_TOKEN,
       },
-      json: true
     });
+    const vaultResponse = await response.data;
 
     if (vaultResponse && vaultResponse.data && vaultResponse.data.value) {
       return vaultResponse.data.value;
     }
   } catch (e) {
-    if (e.statusCode !== 404) throw e;
+    if (e.statusCode !== ERROR_PAGE_NOT_FOUND) {
+      throw e;
+    }
   }
 
   if (fallback) {

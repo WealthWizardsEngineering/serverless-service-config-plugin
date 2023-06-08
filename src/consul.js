@@ -1,4 +1,19 @@
-const request = require('request-promise-native');
+const axios = require('axios');
+const { Agent: HttpsAgent } = require('https');
+const { Agent } = require('http');
+
+const GET_CONFIG = {
+  transformRequest: (r) => JSON.stringify(r),
+  httpAgent: new Agent({ keepAlive: true }),
+  httpsAgent: new HttpsAgent({ keepAlive: true }),
+  responseType: 'json',
+  transitional: {
+    silentJSONParsing: false,
+    forcedJSONParsing: true,
+    clarifyTimeoutError: false,
+  },
+  validateStatus: (s) => s < 300,
+};
 
 async function get(url, fallback = null) {
   if (!process.env.CONSUL_TOKEN) {
@@ -7,13 +22,16 @@ async function get(url, fallback = null) {
     );
   }
   try {
-    const consulData = await request({
+    const response = await axios({
+      ...GET_CONFIG,
+      method: 'GET',
       url,
       headers: {
+        'content-type': 'application/json',
         'X-Consul-Token': process.env.CONSUL_TOKEN
       },
-      json: true
     });
+    const consulData = await response.data;
 
     if (consulData && consulData[0] && consulData[0].Value) {
       return {
@@ -21,7 +39,9 @@ async function get(url, fallback = null) {
       };
     }
   } catch (e) {
-    if (e.statusCode !== 404) throw e;
+    if (e.statusCode !== 404) {
+      throw e;
+    }
   }
 
   if (fallback) {

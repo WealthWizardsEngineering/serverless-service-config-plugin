@@ -9,11 +9,11 @@ const stringToUint8Array = (str) => new TextEncoder('utf-8').encode(str);
 const kms = new KMS();
 
 const consulStub = sinon.stub();
-const requestStub = sinon.stub();
+const axiosStub = sinon.stub();
 const kmsEncryptStub = sinon.stub(kms, 'encrypt');
 
 const { retrieveAndEncrypt } = proxyquire('./vault2kms', {
-  'request-promise-native': requestStub,
+  axios: axiosStub,
   './consul': { get: consulStub }
 });
 
@@ -23,24 +23,18 @@ test('before - fake vault token', (t) => {
 });
 
 test('should retrieve secret from Vault and encrypt with KMS', async (assert) => {
-  assert.plan(3);
+  assert.plan(5);
 
-  requestStub.reset();
+  axiosStub.reset();
   kmsEncryptStub.reset();
 
-  requestStub
-    .withArgs({
-      method: 'GET',
-      url: 'http://vault/secret/path',
-      headers: {
-        'X-Vault-Token': 'vault_token'
-      },
-      json: true
-    })
+  axiosStub
     .resolves({
-      data: {
-        value: 'fake_secret'
-      }
+      data: Promise.resolve({
+        data: {
+          value: 'fake_secret'
+        }
+      })
     });
 
   kmsEncryptStub
@@ -59,6 +53,11 @@ test('should retrieve secret from Vault and encrypt with KMS', async (assert) =>
   assert.equal(encryptedSecret.value, 'ZW5jcnlwdGVkOmZha2Vfc2VjcmV0');
   assert.deepEquals('kmsKeyId', kmsEncryptStub.firstCall.args[0].KeyId);
   assert.deepEquals(stringToUint8Array('fake_secret'), kmsEncryptStub.firstCall.args[0].Plaintext);
+  assert.equal(axiosStub.args[0][0].url, 'http://vault/secret/path');
+  assert.deepEqual(axiosStub.args[0][0].headers, {
+    'content-type': 'application/json',
+    'X-Vault-Token': 'vault_token'
+  });
 });
 
 test('should throw if no data is returned from Vault', async (assert) => {
@@ -67,8 +66,8 @@ test('should throw if no data is returned from Vault', async (assert) => {
   assert.plan(expectedVaultResponses.length);
 
   for (const response of expectedVaultResponses) {
-    requestStub.reset();
-    requestStub.resolves(response);
+    axiosStub.reset();
+    axiosStub.resolves({ data: Promise.resolve(response) });
 
     try {
       await retrieveAndEncrypt('secret/path', 'http://vault/', kms, 'kmsKeyId');
@@ -84,8 +83,8 @@ test('should throw friendler exception when Vault returns 404', async (assert) =
 
   assert.plan(1);
 
-  requestStub.reset();
-  requestStub.rejects(notFoundError);
+  axiosStub.reset();
+  axiosStub.rejects(notFoundError);
 
   try {
     await retrieveAndEncrypt('secret/path', 'http://vault/', kms, 'kmsKeyId');
@@ -96,14 +95,16 @@ test('should throw friendler exception when Vault returns 404', async (assert) =
 
 test('should throw if encrypted secret cannot be retrieved', async (assert) => {
   consulStub.reset();
-  requestStub.reset();
+  axiosStub.reset();
 
   consulStub.withArgs('path/to/secret').resolves('secret/path');
 
-  requestStub.resolves({
-    data: {
-      value: 'fake_secret'
-    }
+  axiosStub.resolves({
+    data: Promise.resolve({
+      data: {
+        value: 'fake_secret'
+      }
+    })
   });
 
   const expectedKmsResponses = [{ data: null }, null];
@@ -130,8 +131,8 @@ test('should return fallback if defined and key not present', async (assert) => 
   const notFoundError = new Error('404 - not found');
   notFoundError.statusCode = 404;
 
-  requestStub.reset();
-  requestStub.rejects(notFoundError);
+  axiosStub.reset();
+  axiosStub.rejects(notFoundError);
 
   kmsEncryptStub.reset();
   kmsEncryptStub
