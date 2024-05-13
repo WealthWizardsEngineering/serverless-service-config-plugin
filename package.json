@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "test": "tape ./src/utils/*.test.js ./src/*.test.js",
-    "ci": "yarn install && yarn run lint && yarn test",
-    "release": "rm -rf node_modules && yarn install --production && npm publish",
+    "ci": "npm install && npm run lint && npm test",
+    "release": "rm -rf node_modules && npm i --production && npm publish",
     "lint": "eslint src",
     "lint:fix": "eslint --fix src"
   },
