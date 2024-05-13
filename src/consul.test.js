@@ -2,9 +2,9 @@ const proxyquire = require('proxyquire').noCallThru();
 const test = require('tape');
 const sinon = require('sinon');
 
-const requestStub = sinon.stub();
+const axiosStub = sinon.stub();
 
-const consul = proxyquire('./consul', { 'request-promise-native': requestStub });
+const consul = proxyquire('./consul', { axios: axiosStub });
 
 test('before', (t) => {
   process.env.CONSUL_TOKEN = 'myToken';
@@ -12,22 +12,22 @@ test('before', (t) => {
 });
 
 test('should retrieve data from consul', async (assert) => {
-  assert.plan(1);
+  assert.plan(3);
 
-  requestStub.reset();
-  requestStub
-    .withArgs({
-      url: 'http://consul/kv/myKey',
-      headers: {
-        'X-Consul-Token': 'myToken',
-      },
-      json: true,
-    })
-    .resolves([{ Value: 'dGhpcyBpcyBteSBjb25maWcgdmFsdWU=' }]);
+  axiosStub.reset();
+  axiosStub
+    .resolves({
+      data: Promise.resolve([{ Value: 'dGhpcyBpcyBteSBjb25maWcgdmFsdWU=' }])
+    });
 
   const consulValue = await consul.get('http://consul/kv/myKey');
 
   assert.equal(consulValue.value, 'this is my config value');
+  assert.equal(axiosStub.args[0][0].url, 'http://consul/kv/myKey');
+  assert.deepEqual(axiosStub.args[0][0].headers, {
+    'content-type': 'application/json',
+    'X-Consul-Token': 'myToken',
+  });
 });
 
 test('should fail if no value is found', async (assert) => {
@@ -36,8 +36,10 @@ test('should fail if no value is found', async (assert) => {
   assert.plan(expectedResponses.length);
 
   for (const response of expectedResponses) {
-    requestStub.reset();
-    requestStub.resolves(response);
+    axiosStub.reset();
+    axiosStub.resolves({
+      data: Promise.resolve(response)
+    });
 
     try {
       await consul.get('http://consul/kv/myKey');
@@ -53,8 +55,8 @@ test('should display friendlier error when receiving 404 from Consul', async (as
   const notFoundError = new Error();
   notFoundError.statusCode = 404;
 
-  requestStub.reset();
-  requestStub.rejects(notFoundError);
+  axiosStub.reset();
+  axiosStub.rejects(notFoundError);
 
   try {
     await consul.get('http://consul/kv/myKey');
