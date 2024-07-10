@@ -53,7 +53,7 @@ test('should display friendlier error when receiving 404 from Consul', async (as
   assert.plan(1);
 
   const notFoundError = new Error();
-  notFoundError.statusCode = 404;
+  notFoundError.response = { status: 404 };
 
   axiosStub.reset();
   axiosStub.rejects(notFoundError);
