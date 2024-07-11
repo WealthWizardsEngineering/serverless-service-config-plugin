@@ -39,7 +39,7 @@ async function get(url, fallback = null) {
       };
     }
   } catch (e) {
-    if (e.response?.status !== 404) {
+    if (e.response && e.response.status !== 404) {
       throw e;
     }
   }
